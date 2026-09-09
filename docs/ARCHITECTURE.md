@@ -17,7 +17,7 @@ sans sur-ingénierie V1.
                 │ GET Route Handlers (polling métriques, export CSV)
 ┌───────────────┴────────────────────────────────────────────────────┐
 │  Next.js 16 (Vercel, serverless)                                   │
-│  middleware.ts (edge)     → barrière session + rôles               │
+│  proxy.ts (edge)          → barrière session + rôles               │
 │  server/actions           → validation Zod + exigerRole + service  │
 │  server/services          → logique métier transactionnelle        │
 │  lib/                     → domaine PUR (moteur, qualité, dialer…) │
@@ -59,7 +59,7 @@ garanties. Le dev embarqué exécute le **même moteur** que la production.
 **Pourquoi** : le besoin est strictement interne (comptes créés par l'admin,
 aucun SSO/OAuth en V1). NextAuth apportait une dépendance lourde pour un flux
 credentials unique. L'implémentation (~200 lignes, testable) est transparente :
-middleware edge (vérification jose), Server Actions (création/destruction),
+proxy edge (vérification jose), Server Actions (création/destruction),
 `exigerRole()` (re-vérification DB du compte actif à chaque action sensible →
 révocation immédiate). Migration vers NextAuth/Auth.js possible plus tard sans
 toucher aux pages (la couche `lireSession()/exigerRole()` est le seul contrat).

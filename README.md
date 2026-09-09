@@ -100,7 +100,7 @@ src/
 │   │   ├── survey-service.ts     # Versionnage immuable
 │   │   └── …
 │   └── actions/              # Server Actions (validation + autorisation + service)
-└── middleware.ts             # Barrière n°1 : session + matrice rôles (edge)
+└── proxy.ts                  # Barrière n°1 : session + matrice rôles (edge)
 tests/                        # Vitest — moteur, qualité, autorisation, export
 prisma/                       # schema.prisma, seed.ts, guards.sql
 ```
@@ -173,7 +173,7 @@ interface DialerProvider {
 ## Sécurité
 
 - Sessions **HttpOnly / SameSite=Lax / Secure (prod)**, JWT HS256 signé (`AUTH_SECRET`), expiration 12 h
-- **Triple barrière d'autorisation** : middleware edge → garde server-side dans chaque Server Action / Route Handler (`exigerRole`) → contraintes base
+- **Triple barrière d'autorisation** : proxy (edge) → garde server-side dans chaque Server Action / Route Handler (`exigerRole`) → contraintes base
 - Mots de passe **bcrypt** (coût 10), jamais en clair ; anti-bruteforce (fenêtre glissante par IP sur la connexion)
 - **Journal d'audit** des actions sensibles (connexions, publications, exports, revues qualité, changements de rôle)
 - Validation Zod systématique des entrées ; ORM = pas d'injection SQL ; jamais de trace brute exposée à l'utilisateur

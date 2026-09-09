@@ -3,15 +3,15 @@ import { NOM_COOKIE, verifierTokenSession } from "@/lib/auth/session-core";
 import { accesAutorise, ACCUEIL_PAR_ROLE, estRoutePublique } from "@/lib/auth/permissions";
 
 /**
- * Edge middleware — first layer of route protection:
+ * Proxy (ex-middleware, convention Next.js 16) — first layer of route protection:
  *  1. redirects "/" to the role home page (or login),
  *  2. blocks unauthenticated access to every non-public route,
  *  3. enforces the role → route matrix.
  *
- * NOTE: middleware is a first barrier only. Every Server Action and Route
+ * NOTE: the proxy is a first barrier only. Every Server Action and Route
  * Handler re-verifies session + role server-side (defense in depth).
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const chemin = request.nextUrl.pathname;
 
   if (estRoutePublique(chemin)) {
