@@ -1,0 +1,408 @@
+// ============================================================================
+// GIG SURVEY — Prisma schema (PostgreSQL)
+// ----------------------------------------------------------------------------
+// Professional CATI (Computer-Assisted Telephone Interviewing) platform.
+//
+// Design principles:
+//  - Normalized relational model; answers are typed & queryable (never one
+//    giant JSON blob).
+//  - Published survey versions are IMMUTABLE (enforced by DB triggers, see
+//    prisma/guards.sql). New content = new version.
+//  - Respondent identity/contact (PII) lives in "Respondent" only; interviews
+//    and answers reference it by id, so analytical access can be restricted
+//    without exposing PII.
+//  - Status vocabulary is French (used directly by the UI): the platform is
+//    a French-language product. Model/field names are English (spec).
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// Enumerations
+// ----------------------------------------------------------------------------
+
+enum Role {
+  ADMINISTRATEUR
+  GESTIONNAIRE
+  SUPERVISEUR
+  AGENT
+}
+
+enum StatutEnquete {
+  BROUILLON
+  PUBLIEE
+  ARCHIVEE
+}
+
+enum StatutVersionEnquete {
+  BROUILLON
+  PUBLIEE
+  ARCHIVEE
+}
+
+enum TypeQuestion {
+  TEXTE_COURT
+  TEXTE_LONG
+  NOMBRE
+  OUI_NON
+  CHOIX_UNIQUE
+  CHOIX_MULTIPLE
+  ECHELLE
+  DATE
+  LISTE_DEROULANTE
+}
+
+enum StatutRepondant {
+  DISPONIBLE
+  EN_COURS
+  INTERROGE
+  RAPPEL_PLANIFIE
+  INJOIGNABLE
+  EXCLU
+}
+
+enum StatutAppel {
+  EN_COURS
+  TERMINE
+  SANS_REPONSE
+  OCCUPE
+  NUMERO_INCORRECT
+  REFUS
+  RAPPEL
+  ABANDONNE
+}
+
+enum StatutEntretien {
+  EN_COURS
+  TERMINE
+  ABANDONNE
+}
+
+enum StatutQualiteEntretien {
+  NON_EXAMINE
+  A_EXAMINER
+  VALIDE
+  REJETE
+  FAUX_POSITIF
+}
+
+enum TypeSignalement {
+  DUREE_TROP_COURTE
+  DOUBLON
+  REPETITION_REPONSES
+  ACTIVITE_EXCESSIVE
+  INCOHERENCE
+}
+
+enum SeveriteSignalement {
+  FAIBLE
+  MOYENNE
+  ELEVEE
+  CRITIQUE
+}
+
+enum StatutSignalement {
+  A_EXAMINER
+  VALIDE
+  REJETE
+  FAUX_POSITIF
+}
+
+enum StatutAgent {
+  DISPONIBLE
+  EN_APPEL
+  EN_ENTRETIEN
+  EN_PAUSE
+  HORS_LIGNE
+}
+
+// ----------------------------------------------------------------------------
+// Users & auth
+// ----------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  createdSurveys    Survey[]         @relation("SurveyCreator")
+  interviews        Interview[]      @relation("InterviewAgent")
+  callAttempts      CallAttempt[]    @relation("CallAgent")
+  agentSessions     AgentSession[]
+  flaggedOnQuality  QualityFlag[]    @relation("FlaggedAgent")
+  reviewedFlags     QualityFlag[]    @relation("FlagReviewer")
+  auditLogs         AuditLog[]
+  assignedRespondents Respondent[]  @relation("RespondentAssignee")
+
+  @@index([role, active])
+}
+
+// ----------------------------------------------------------------------------
+// Respondents (PII kept isolated from analytical data)
+// ----------------------------------------------------------------------------
+
+model Respondent {
+  id           String          @id @default(cuid())
+  externalRef  String?         @unique
+  name         String?
+  phone        String
+  metadata     Json?
+  status       StatutRepondant @default(DISPONIBLE)
+  // Assignment lock: at most one agent can own a respondent at a time.
+  assignedToId String?
+  assignedAt   DateTime?
+  lockExpiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignedTo   User?        @relation("RespondentAssignee", fields: [assignedToId], references: [id])
+  callAttempts CallAttempt[]
+  interviews   Interview[]
+
+  @@index([status, lockExpiresAt])
+  @@index([assignedToId])
+  @@index([phone])
+}
+
+// ----------------------------------------------------------------------------
+// Surveys & immutable versions
+// ----------------------------------------------------------------------------
+
+model Survey {
+  id          String        @id @default(cuid())
+  title       String
+  description String?
+  status      StatutEnquete @default(BROUILLON)
+  createdById String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  createdBy  User            @relation("SurveyCreator", fields: [createdById], references: [id])
+  versions   SurveyVersion[]
+
+  @@index([status])
+}
+
+model SurveyVersion {
+  id            String               @id @default(cuid())
+  surveyId      String
+  versionNumber Int
+  status        StatutVersionEnquete @default(BROUILLON)
+  publishedAt   DateTime?
+  archivedAt    DateTime?
+  changelog     String?
+  // Survey-level runtime config: expectedDurationSeconds, minSecondsPerQuestion,
+  // coherenceRules (declarative incompatibilities), dialer hints…
+  config        Json?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  survey     Survey      @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  questions  Question[]
+  interviews Interview[]
+
+  @@unique([surveyId, versionNumber])
+  @@index([surveyId, status])
+}
+
+model Question {
+  id              String       @id @default(cuid())
+  surveyVersionId String
+  key             String
+  text            String
+  helpText        String?
+  type            TypeQuestion
+  required        Boolean      @default(false)
+  order           Int
+  // Type-specific config: minLength/maxLength, min/max & unit for numbers,
+  // scaleMin/scaleMax/scaleLabels, placeholder…
+  configuration   Json?
+  // Declarative validation: rules evaluated by the survey engine.
+  validationRules Json?
+  // Conditional visibility: { op: "AND"|"OR", conditions: [{questionKey, operator, value}] }
+  conditionalLogic Json?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  surveyVersion SurveyVersion    @relation(fields: [surveyVersionId], references: [id], onDelete: Cascade)
+  options       QuestionOption[]
+  answers       Answer[]
+
+  @@unique([surveyVersionId, key])
+  @@index([surveyVersionId, order])
+}
+
+model QuestionOption {
+  id         String @id @default(cuid())
+  questionId String
+  label      String
+  value      String
+  order      Int
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, value])
+  @@index([questionId, order])
+}
+
+// ----------------------------------------------------------------------------
+// Calling
+// ----------------------------------------------------------------------------
+
+model CallAttempt {
+  id              String      @id @default(cuid())
+  respondentId    String
+  agentId         String
+  status          StatutAppel @default(EN_COURS)
+  startedAt       DateTime    @default(now())
+  endedAt         DateTime?
+  durationSeconds Int?
+  attemptNumber   Int
+  notes           String?
+  callbackAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  respondent Respondent @relation(fields: [respondentId], references: [id])
+  agent      User       @relation("CallAgent", fields: [agentId], references: [id])
+  interview  Interview?
+
+  @@index([respondentId, attemptNumber])
+  @@index([agentId, startedAt])
+  @@index([status, startedAt])
+  @@index([callbackAt])
+}
+
+// ----------------------------------------------------------------------------
+// Interviews & answers
+// ----------------------------------------------------------------------------
+
+model Interview {
+  id              String                 @id @default(cuid())
+  respondentId    String
+  surveyVersionId String
+  agentId         String
+  callAttemptId   String?                @unique
+  status          StatutEntretien        @default(EN_COURS)
+  startedAt       DateTime               @default(now())
+  completedAt     DateTime?
+  durationSeconds Int?
+  qualityStatus   StatutQualiteEntretien @default(NON_EXAMINE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  respondent    Respondent    @relation(fields: [respondentId], references: [id])
+  surveyVersion SurveyVersion @relation(fields: [surveyVersionId], references: [id])
+  agent         User          @relation("InterviewAgent", fields: [agentId], references: [id])
+  callAttempt   CallAttempt?  @relation(fields: [callAttemptId], references: [id])
+  answers       Answer[]
+  qualityFlags  QualityFlag[]
+
+  @@index([status, createdAt])
+  @@index([agentId, status])
+  @@index([surveyVersionId, status])
+  @@index([respondentId])
+}
+
+model Answer {
+  id           String    @id @default(cuid())
+  interviewId  String
+  questionId   String
+  questionKey  String // denormalized stable key → queryable analytics
+  textValue    String?
+  numberValue  Float?
+  dateValue    DateTime?
+  boolValue    Boolean?
+  choiceValues String[] // option values; single-choice stores exactly one
+
+  updatedAt DateTime @updatedAt
+
+  interview Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  question  Question  @relation(fields: [questionId], references: [id])
+
+  @@unique([interviewId, questionId])
+  @@index([questionKey, numberValue])
+  @@index([questionKey, textValue])
+  @@index([interviewId])
+}
+
+// ----------------------------------------------------------------------------
+// Data quality
+// ----------------------------------------------------------------------------
+
+model QualityFlag {
+  id          String             @id @default(cuid())
+  interviewId String?
+  agentId     String?
+  type        TypeSignalement
+  severity    SeveriteSignalement
+  reason      String
+  status      StatutSignalement  @default(A_EXAMINER)
+  metadata    Json?
+  reviewedById String?
+  reviewedAt  DateTime?
+  reviewComment String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  interview Interview? @relation(fields: [interviewId], references: [id])
+  agent     User?      @relation("FlaggedAgent", fields: [agentId], references: [id])
+  reviewedBy User?     @relation("FlagReviewer", fields: [reviewedById], references: [id])
+
+  @@index([status, createdAt])
+  @@index([type, status])
+  @@index([interviewId])
+  @@index([agentId])
+}
+
+// ----------------------------------------------------------------------------
+// Agent presence (supervision) & audit
+// ----------------------------------------------------------------------------
+
+model AgentSession {
+  id             String      @id @default(cuid())
+  agentId        String
+  status         StatutAgent @default(HORS_LIGNE)
+  startedAt      DateTime    @default(now())
+  endedAt        DateTime?
+  lastActivityAt DateTime    @default(now())
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  agent User @relation(fields: [agentId], references: [id])
+
+  @@index([agentId, status])
+  @@index([status, lastActivityAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String // ex. "ENQUETE_PUBLIEE", "EXPORT_REPONSES", "ROLE_MODIFIE"
+  entityType String
+  entityId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([userId, createdAt])
+  @@index([action])
+}
