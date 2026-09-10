@@ -1,15 +1,20 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { exigerAcces } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import { depuisColonnes, type QuestionDef } from "@/lib/survey-engine";
-import { InterviewRunner } from "@/components/app/interview-runner";
+import { obtenirDialerMeta } from "@/lib/dialer/registry";
+import { EspaceEntretien } from "@/components/app/espace-entretien";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Entretien en cours — GIG Survey" };
 
-/** Live interview — strict ownership check (concurrency + authorization). */
+/**
+ * INTERVIEW WORKSPACE PAGE — strict server-side authorization:
+ * authenticated agent role + interview ownership (an agent can never open
+ * another agent's interview by changing the URL). The questionnaire served is
+ * the one pinned to the interview's SurveyVersion — never "latest published".
+ */
 export default async function PageEntretien({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await exigerAcces(["AGENT", "ADMINISTRATEUR"]);
@@ -17,16 +22,18 @@ export default async function PageEntretien({ params }: { params: Promise<{ id: 
   const entretien = await db.interview.findUnique({
     where: { id },
     include: {
-      respondent: { select: { id: true, name: true } },
-      callAttempt: { select: { attemptNumber: true } },
+      respondent: { select: { id: true, name: true, phone: true, externalRef: true } },
+      callAttempt: { select: { id: true, attemptNumber: true, status: true } },
     },
   });
   if (!entretien) redirect("/session");
   if (entretien.agentId !== session.sub) {
     throw new AppError("ACCES_REFUSE", "Cet entretien n'est pas assigné à votre session.");
   }
-  if (entretien.status === "TERMINE") redirect("/session");
+  if (entretien.status !== "EN_COURS") redirect("/session");
 
+  // The interview's own SurveyVersion is the single source of truth (§4):
+  // a manager publishing a new version later never mutates this interview.
   const version = await db.surveyVersion.findUnique({
     where: { id: entretien.surveyVersionId },
     include: {
@@ -34,8 +41,8 @@ export default async function PageEntretien({ params }: { params: Promise<{ id: 
       questions: { include: { options: { orderBy: { order: "asc" } } }, orderBy: { order: "asc" } },
     },
   });
-  if (!version || version.status !== "PUBLIEE") {
-    throw new AppError("ETAT_INVALIDE", "La version d'enquête associée n'est plus disponible.");
+  if (!version) {
+    throw new AppError("ETAT_INVALIDE", "La version d'enquête associée à cet entretien est introuvable.");
   }
 
   const reponsesEnBases = await db.answer.findMany({ where: { interviewId: entretien.id } });
@@ -45,30 +52,32 @@ export default async function PageEntretien({ params }: { params: Promise<{ id: 
   }
 
   const questions = version.questions as unknown as QuestionDef[];
+  if (!entretien.callAttempt) {
+    throw new AppError("ETAT_INVALIDE", "Aucun appel n'est associé à cet entretien.");
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="mx-auto max-w-2xl">
-        <Link href="/session" className="text-sm text-muted-foreground hover:text-slate-900">
-          ← Retour à la session
-        </Link>
-      </div>
-      <InterviewRunner
-        mode="entretien"
-        interviewId={entretien.id}
-        questionnaire={{
-          titreEnquete: version.survey.title,
-          versionNumber: version.versionNumber,
-          questions,
-          configuration: (version.config ?? null) as never,
-        }}
-        contexte={{
-          idRepondant: entretien.respondent.id,
-          nom: entretien.respondent.name,
-          tentative: entretien.callAttempt?.attemptNumber,
-        }}
-        reponsesInitiales={reponsesInitiales as never}
-      />
-    </div>
+    <EspaceEntretien
+      interviewId={entretien.id}
+      appel={{
+        id: entretien.callAttempt.id,
+        attemptNumber: entretien.callAttempt.attemptNumber,
+        statut: entretien.callAttempt.status,
+      }}
+      repondant={{
+        nom: entretien.respondent.name,
+        telephone: entretien.respondent.phone,
+        reference: entretien.respondent.externalRef,
+      }}
+      enquete={{ titre: version.survey.title, versionNumber: version.versionNumber }}
+      questionnaire={{
+        titreEnquete: version.survey.title,
+        versionNumber: version.versionNumber,
+        questions,
+        configuration: (version.config ?? null) as never,
+      }}
+      reponsesInitiales={reponsesInitiales as never}
+      dialer={obtenirDialerMeta()}
+    />
   );
 }

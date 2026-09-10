@@ -2,8 +2,9 @@ import "server-only";
 import { db } from "@/lib/db";
 import { AppError } from "@/lib/errors";
 import { config } from "@/lib/config";
-import { enregistrerAudit } from "@/lib/audit";
+import { enregistrerAudit, ACTIONS_AUDIT } from "@/lib/audit";
 import { marquerEtatActivite } from "@/server/services/agent-session-service";
+import { appliquerResultatAppel } from "@/server/services/call-service";
 import {
   normaliserValeur,
   questionsVisibles,
@@ -23,7 +24,7 @@ import {
   type PropositionSignalement,
   type SeuilsQualite,
 } from "@/lib/quality/rules";
-import type { Prisma } from "@prisma/client";
+import type { Prisma, StatutAppel } from "@prisma/client";
 
 /**
  * INTERVIEW LIFECYCLE.
@@ -60,7 +61,12 @@ export async function chargerVersionPubliee(surveyVersionId: string) {
   return version;
 }
 
-/** Starts (or resumes) an interview for a completed call. */
+/**
+ * LEGACY COMPATIBILITY — starts (or resumes) an interview for a call from the
+ * old call screen. The normal workflow creates the interview at assignment
+ * time (see respondent-queue); this path only serves in-flight calls created
+ * before the interview-first refactor.
+ */
 export async function demarrerEntretien(params: { agentId: string; callAttemptId: string }) {
   return db.$transaction(async (tx) => {
     const appel = await tx.callAttempt.findUnique({
@@ -69,11 +75,9 @@ export async function demarrerEntretien(params: { agentId: string; callAttemptId
     });
     if (!appel) throw new AppError("INTROUVABLE", "Cet appel est introuvable.");
     if (appel.agentId !== params.agentId) throw new AppError("ACCES_REFUSE");
-    if (appel.status !== "TERMINE") {
-      throw new AppError("ETAT_INVALIDE", "L'appel doit être terminé avant de démarrer l'entretien.");
-    }
 
-    // Resume an already-started interview for this call (refresh-safe).
+    // Resume an already-started interview for this call (refresh-safe) —
+    // whatever the call status (the new workflow keeps it EN_COURS).
     const existant = await tx.interview.findUnique({ where: { callAttemptId: appel.id } });
     if (existant) {
       if (existant.status !== "EN_COURS") {
@@ -81,6 +85,10 @@ export async function demarrerEntretien(params: { agentId: string; callAttemptId
       }
       await marquerEtatActivite(params.agentId, "EN_ENTRETIEN");
       return existant;
+    }
+
+    if (appel.status !== "TERMINE") {
+      throw new AppError("ETAT_INVALIDE", "L'appel doit être terminé avant de démarrer l'entretien.");
     }
 
     // Which survey version? The active published version of the center's
@@ -200,11 +208,19 @@ export interface ResultatSoumission {
   signalements: number;
 }
 
-/** Final, transactional interview submission. */
+/**
+ * Final, transactional interview submission.
+ *
+ * CATI WORKFLOW (refactor): submitting the questionnaire IS the "Entretien
+ * complété" disposition — the associated call attempt (still EN_COURS in the
+ * interview-first flow) is closed as TERMINE inside the same transaction, so
+ * interview + call + respondent + presence always commit atomically.
+ */
 export async function soumettreEntretien(params: {
   agentId: string;
   interviewId: string;
   reponsesBrutes: Record<string, unknown>;
+  notesAppel?: string;
 }): Promise<ResultatSoumission> {
   const maintenant = new Date();
 
@@ -271,6 +287,21 @@ export async function soumettreEntretien(params: {
       where: { id: entretien.respondentId },
       data: { status: "INTERROGE", assignedToId: null, assignedAt: null, lockExpiresAt: null },
     });
+
+    // Close the associated call attempt (interview-first flow keeps it
+    // EN_COURS until disposition). Idempotent for legacy data (already closed).
+    if (entretien.callAttemptId) {
+      const debutAppel = entretien.callAttempt?.startedAt ?? entretien.startedAt;
+      await tx.callAttempt.updateMany({
+        where: { id: entretien.callAttemptId, status: "EN_COURS" },
+        data: {
+          status: "TERMINE",
+          endedAt: maintenant,
+          durationSeconds: Math.max(0, Math.floor((maintenant.getTime() - debutAppel.getTime()) / 1000)),
+          notes: params.notesAppel?.trim() ? params.notesAppel.trim() : undefined,
+        },
+      });
+    }
 
     await marquerEtatActivite(params.agentId, "DISPONIBLE");
 
@@ -374,7 +405,11 @@ export async function soumettreEntretien(params: {
   });
 }
 
-/** Agent abandons an in-progress interview (respondent hangs up mid-survey…). */
+/**
+ * Agent abandons an in-progress interview (explicit choice only — leaving the
+ * page never abandons). The associated call attempt is closed as ABANDONNE so
+ * no orphan open call survives; the respondent returns to the queue.
+ */
 export async function abandonnerEntretien(params: { agentId: string; interviewId: string }) {
   await db.$transaction(async (tx) => {
     const entretien = await contexteEntretien(tx, params.interviewId, params.agentId);
@@ -385,6 +420,12 @@ export async function abandonnerEntretien(params: { agentId: string; interviewId
       where: { id: entretien.id },
       data: { status: "ABANDONNE" },
     });
+    if (entretien.callAttemptId) {
+      await tx.callAttempt.updateMany({
+        where: { id: entretien.callAttemptId, status: "EN_COURS" },
+        data: { status: "ABANDONNE", endedAt: new Date() },
+      });
+    }
     await tx.respondent.update({
       where: { id: entretien.respondentId },
       data: { status: "DISPONIBLE", assignedToId: null, assignedAt: null, lockExpiresAt: null },
@@ -393,8 +434,76 @@ export async function abandonnerEntretien(params: { agentId: string; interviewId
   });
   await enregistrerAudit({
     userId: params.agentId,
-    action: "ENTRETIEN_ABANDONNE",
+    action: ACTIONS_AUDIT.ENTRETIEN_ABANDONNE,
     entityType: "Interview",
     entityId: params.interviewId,
+  });
+}
+
+/**
+ * Unified disposition — the agent closes the call WITHOUT a completed
+ * interview (no answer, busy, refusal, wrong number, callback…).
+ * One transaction: interview → ABANDONNE (answers preserved for audit, never
+ * counted as a completed political interview), call attempt → the real
+ * outcome, respondent → the matching queue state, presence → DISPONIBLE.
+ */
+export async function cloturerAppelSansEntretien(params: {
+  agentId: string;
+  interviewId: string;
+  statut: Exclude<StatutAppel, "EN_COURS" | "TERMINE">;
+  dureeSecondes?: number;
+  notes?: string;
+  rappelDate?: string;
+  rappelHeure?: string;
+}) {
+  await db.$transaction(async (tx) => {
+    const entretien = await contexteEntretien(tx, params.interviewId, params.agentId);
+    if (entretien.status !== "EN_COURS") {
+      throw new AppError("ETAT_INVALIDE", "Cet entretien a déjà été clôturé.");
+    }
+    const maintenant = new Date();
+
+    await tx.interview.update({
+      where: { id: entretien.id },
+      data: { status: "ABANDONNE" },
+    });
+
+    if (entretien.callAttempt) {
+      await appliquerResultatAppel(
+        tx,
+        entretien.callAttempt,
+        {
+          statut: params.statut,
+          dureeSecondes: params.dureeSecondes,
+          notes: params.notes,
+          rappelDate: params.rappelDate,
+          rappelHeure: params.rappelHeure,
+        },
+        maintenant,
+      );
+    } else {
+      // Defensive: interview without a call attempt (should not occur).
+      await tx.respondent.update({
+        where: { id: entretien.respondentId },
+        data: { status: "DISPONIBLE", assignedToId: null, assignedAt: null, lockExpiresAt: null },
+      });
+      await marquerEtatActivite(params.agentId, "DISPONIBLE");
+    }
+  });
+  await enregistrerAudit({
+    userId: params.agentId,
+    action: "APPEL_CLOTURE_SANS_ENTRETIEN",
+    entityType: "Interview",
+    entityId: params.interviewId,
+    metadata: { statut: params.statut },
+  });
+}
+
+/** The agent's current interview (dashboard resume shortcut). */
+export async function obtenirEntretienActif(agentId: string) {
+  return db.interview.findFirst({
+    where: { agentId, status: "EN_COURS" },
+    orderBy: { startedAt: "desc" },
+    include: { respondent: { select: { id: true, name: true, phone: true } } },
   });
 }

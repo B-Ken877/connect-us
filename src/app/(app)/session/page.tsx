@@ -1,7 +1,7 @@
 import { exigerAcces } from "@/lib/auth/session";
 import { ConsoleAgent } from "@/components/app/console-agent";
 import { statistiquesAgent } from "@/server/services/stats-service";
-import { obtenirAppelActif } from "@/server/services/call-service";
+import { obtenirEntretienActif } from "@/server/services/interview-service";
 import { db } from "@/lib/db";
 import { obtenirDialerMeta } from "@/lib/dialer/registry";
 
@@ -11,9 +11,9 @@ export const dynamic = "force-dynamic";
 /** Agent workspace — intentionally minimal: receive, call, interview, next. */
 export default async function PageSession() {
   const session = await exigerAcces(["AGENT", "ADMINISTRATEUR"]);
-  const [stats, appelActif, versionActive] = await Promise.all([
+  const [stats, entretienActif, versionActive] = await Promise.all([
     statistiquesAgent(session.sub),
-    obtenirAppelActif(session.sub),
+    obtenirEntretienActif(session.sub),
     db.surveyVersion.findFirst({
       where: { status: "PUBLIEE" },
       orderBy: { publishedAt: "desc" },
@@ -28,9 +28,13 @@ export default async function PageSession() {
       prenom={prenom}
       nomComplet={session.nom}
       statsInitiales={stats}
-      appelActif={
-        appelActif
-          ? { appelId: appelActif.id, nom: appelActif.respondent.name, telephone: appelActif.respondent.phone }
+      entretienActif={
+        entretienActif
+          ? {
+              interviewId: entretienActif.id,
+              nom: entretienActif.respondent.name,
+              telephone: entretienActif.respondent.phone,
+            }
           : null
       }
       versionActive={

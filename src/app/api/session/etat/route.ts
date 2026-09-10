@@ -2,26 +2,31 @@ import { NextResponse } from "next/server";
 import { exigerRole } from "@/lib/auth/session";
 import { statistiquesAgent } from "@/server/services/stats-service";
 import { battement } from "@/server/services/agent-session-service";
-import { obtenirAppelActif } from "@/server/services/call-service";
+import { obtenirEntretienActif } from "@/server/services/interview-service";
 import { versMessageUtilisateur } from "@/lib/errors";
 
 /**
  * Agent console feed + heartbeat (GET poll every ~15 s):
- * refreshes presence freshness, personal stats and any active call to resume.
+ * refreshes presence freshness, personal stats and the current interview
+ * to resume (interview-first workflow).
  */
 export async function GET() {
   try {
     const utilisateur = await exigerRole(["AGENT", "ADMINISTRATEUR"]);
     await battement(utilisateur.id);
-    const [stats, appelActif] = await Promise.all([
+    const [stats, entretienActif] = await Promise.all([
       statistiquesAgent(utilisateur.id),
-      obtenirAppelActif(utilisateur.id),
+      obtenirEntretienActif(utilisateur.id),
     ]);
     return NextResponse.json(
       {
         stats,
-        appelActif: appelActif
-          ? { appelId: appelActif.id, nom: appelActif.respondent.name, telephone: appelActif.respondent.phone }
+        entretienActif: entretienActif
+          ? {
+              interviewId: entretienActif.id,
+              nom: entretienActif.respondent.name,
+              telephone: entretienActif.respondent.phone,
+            }
           : null,
       },
       { headers: { "Cache-Control": "no-store" } },

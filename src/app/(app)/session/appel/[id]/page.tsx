@@ -8,7 +8,14 @@ import { EcranAppel } from "@/components/app/ecran-appel";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Appel en cours — GIG Survey" };
 
-/** Call screen — ownership verified server-side (concurrency guard). */
+/**
+ * LEGACY CALL SCREEN — compatibility layer.
+ * The normal workflow no longer passes here: the queue creates the interview
+ * at assignment and the agent lands directly in /session/entretien/[id].
+ * This route remains for in-flight data created before the refactor: whenever
+ * a live interview exists for the call, the agent is transparently funneled
+ * into the interview workspace.
+ */
 export default async function PageAppel({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await exigerAcces(["AGENT", "ADMINISTRATEUR"]);
@@ -31,10 +38,16 @@ export default async function PageAppel({ params }: { params: Promise<{ id: stri
   if (appel.agentId !== session.sub) {
     throw new AppError("ACCES_REFUSE", "Cet appel n'est pas attribué à votre session.");
   }
+
+  // Live interview attached to this call → the interview workspace IS the
+  // destination, whatever the call status.
+  const entretienExistante = await db.interview.findUnique({ where: { callAttemptId: appel.id } });
+  if (entretienExistante && entretienExistante.status === "EN_COURS") {
+    redirect(`/session/entretien/${entretienExistante.id}`);
+  }
+
   if (appel.status !== "EN_COURS") {
-    // Closed call: resume the interview if one exists, otherwise back to queue.
-    const entretien = await db.interview.findUnique({ where: { callAttemptId: appel.id } });
-    if (entretien && entretien.status === "EN_COURS") redirect(`/session/entretien/${entretien.id}`);
+    // Closed call without a live interview: back to the queue.
     redirect("/session");
   }
 

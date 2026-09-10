@@ -43,7 +43,15 @@ interface Props {
   mode: "entretien" | "apercu";
   interviewId?: string;
   questionnaire: DonneesQuestionnaire;
-  contexte?: { idRepondant: string; nom: string | null; tentative?: number };
+  /** Hide the survey title block (the interview workspace provides its own header). */
+  afficherTitre?: boolean;
+  /**
+   * CATI WORKSPACE HANDOFF — when provided, a successful "Terminer
+   * l'entretien" validates the questionnaire and hands the answers over to
+   * the workspace (which shows the call disposition) instead of submitting
+   * directly. The engine logic itself is unchanged.
+   */
+  onQuestionnaireValide?: (reponses: ReponsesParCle) => void;
   reponsesInitiales?: ReponsesParCle;
 }
 
@@ -54,7 +62,7 @@ interface Props {
  * Server DB remains the single source of truth; localStorage is only a
  * UX-resilience mirror.
  */
-export function InterviewRunner({ mode, interviewId, questionnaire, contexte, reponsesInitiales }: Props) {
+export function InterviewRunner({ mode, interviewId, questionnaire, afficherTitre = true, onQuestionnaireValide, reponsesInitiales }: Props) {
   const router = useRouter();
   const { questions, titreEnquete, versionNumber, configuration } = questionnaire;
 
@@ -89,7 +97,8 @@ export function InterviewRunner({ mode, interviewId, questionnaire, contexte, re
       const brut = localStorage.getItem(cleLocale);
       if (brut) {
         const local = JSON.parse(brut) as ReponsesParCle;
-        // Intentional client-only hydration of the resilience mirror after mount.
+        // Intentional client-only hydration of the resilience mirror after mount
+        // (browser storage is unavailable during SSR — cannot use a lazy initializer).
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setReponses((prec) => {
           const fusion: ReponsesParCle = {};
@@ -191,6 +200,15 @@ export function InterviewRunner({ mode, interviewId, questionnaire, contexte, re
         description: "Certaines questions obligatoires nécessitent une réponse.",
         variant: "destructive",
       });
+      return;
+    }
+
+    // Flush pending autosaves before leaving the questionnaire phase.
+    await sauvegarderMaintenant();
+
+    // Workspace handoff: the disposition panel decides the final outcome.
+    if (onQuestionnaireValide) {
+      onQuestionnaireValide(reponses);
       return;
     }
 
@@ -297,11 +315,13 @@ export function InterviewRunner({ mode, interviewId, questionnaire, contexte, re
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className="text-sm font-medium text-slate-900">{titreEnquete}</p>
-          <p className="text-xs text-muted-foreground">Version {versionNumber}</p>
-        </div>
-        <div className="flex items-center gap-3">
+        {afficherTitre && (
+          <div>
+            <p className="text-sm font-medium text-slate-900">{titreEnquete}</p>
+            <p className="text-xs text-muted-foreground">Version {versionNumber}</p>
+          </div>
+        )}
+        <div className={afficherTitre ? "flex items-center gap-3" : "ml-auto flex items-center gap-3"}>
           {mode === "apercu" && (
             <span className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">
               <Eye className="h-3.5 w-3.5" /> Aperçu
@@ -319,21 +339,13 @@ export function InterviewRunner({ mode, interviewId, questionnaire, contexte, re
               aria-live="polite"
             >
               {sauvegarde === "en_cours" && "Enregistrement…"}
-              {sauvegarde === "ok" && "Réponses enregistrées ✓"}
-              {sauvegarde === "erreur" && "Échec d'enregistrement — nouvelle tentative à la navigation"}
+              {sauvegarde === "ok" && "Enregistré ✓"}
+              {sauvegarde === "erreur" && "Échec de l'enregistrement — nouvelle tentative à la navigation"}
               {sauvegarde === "repos" && ""}
             </span>
           )}
         </div>
       </div>
-
-      {contexte && (
-        <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm">
-          <span className="text-muted-foreground">Répondant :</span>{" "}
-          <span className="font-medium">{contexte.nom ?? "Répondant"}</span>{" "}
-          <span className="font-mono text-xs text-muted-foreground">({contexte.idRepondant.slice(-8)})</span>
-        </div>
-      )}
 
       <div className="space-y-1.5">
         <div className="flex justify-between text-xs text-muted-foreground">
@@ -385,7 +397,7 @@ export function InterviewRunner({ mode, interviewId, questionnaire, contexte, re
         </Button>
 
         <div className="flex items-center gap-2">
-          {mode === "entretien" && (
+          {mode === "entretien" && !onQuestionnaireValide && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="ghost" className="text-muted-foreground">

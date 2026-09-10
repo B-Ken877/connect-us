@@ -198,25 +198,38 @@ parcours UI est faite manuellement/par navigateur au moment de la livraison.
 
 ## 3. Flux critiques
 
-### Passation d'un entretien (parcours agent)
+### Passation d'un entretien (parcours agent — workspace unifié)
 
 ```
 Commencer la session → DISPONIBLE
    │ attribuerProchainRepondant()          [transaction SKIP LOCKED]
+   │   répondant réservé + CallAttempt EN_COURS + Interview EN_COURS
+   │   (surveyVersionId figé = version publiée active À L'ATTRIBUTION)
    ▼
-Écran appel ──« Appeler »──▶ tel: (composeur natif)
+/session/entretien/[id] — le questionnaire est DÉJÀ à l'écran
+   │ EnteteRepondant : répondant + téléphone + « ☎ Appeler » (initierAppel, aucune navigation)
+   ▼
+tel: (composeur natif) — l'agent revient : le questionnaire reste où il était
    │
-   ├─ RAPPEL ─▶ callAttempt.RAPPEL + callbackAt → répondant RAPPEL_PLANIFIE
-   ├─ REFUS/NUMERO_INCORRECT ─▶ répondant EXCLU
-   ├─ SANS_REPONSE/OCCUPE/ABANDONNE ─▶ répondant DISPONIBLE (nouvelle tentative)
-   └─ TERMINE ─▶ « démarrer l'entretien » → Interview EN_COURS (version publiée)
-                      │
-                      │ autosave par réponse (upsert, 700 ms debounced + navigation)
-                      ▼
-        « Terminer l'entretien » [TRANSACTION]
-        réponses upsertées + interview TERMINE + répondant INTERROGE
-        + présence DISPONIBLE + signalements qualité + audit
+   │ autosave par réponse (upsert, 700 ms debounced + navigation)
+   ▼
+« Terminer l'entretien » → validation moteur → PanneauDisposition
+   ├─ « Entretien complété » [TRANSACTION]
+   │     réponses upsertées + interview TERMINE + appel TERMINE
+   │     + répondant INTERROGE + présence DISPONIBLE + signalements qualité
+   └─ Sans réponse / Occupé / Refus / Numéro incorrect / Rappel [TRANSACTION]
+         interview ABANDONNE (JAMAIS comptée comme terminée) + appel clôturé
+         avec l'issue réelle + répondant remis en file / planifié / exclu
+   ▼
+« Répondant suivant » → nouvelle attribution → workspace suivant
 ```
+
+Notes :
+- L'écran `/session/appel/[id]` subsiste comme **couche de compatibilité**
+  (données en vol antérieures au refactor) : dès qu'un entretien vivant
+  existe pour l'appel, il redirige vers `/session/entretien/[id]`.
+- L'index partiel `uq_appel_actif_par_agent` rend un double « répondant
+  suivant » impossible au niveau base (un seul appel EN_COURS par agent).
 
 ### Publication d'une nouvelle version
 

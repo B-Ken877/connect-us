@@ -147,9 +147,8 @@ export function EcranAppel({ appel, repondant, enqueteActive, dialer }: Props) {
               Tentative n°{appel.attemptNumber}
             </Badge>
           </div>
-          <CardDescription className="font-mono text-xs">
-            ID répondant : {repondant.id}
-            {repondant.reference ? ` · Réf. ${repondant.reference}` : ""}
+          <CardDescription className="text-xs">
+            {repondant.reference ? `Réf. ${repondant.reference}` : "Répondant attribué automatiquement"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -184,7 +183,7 @@ export function EcranAppel({ appel, repondant, enqueteActive, dialer }: Props) {
                 {messageDialer}
                 {dejaAppele && (
                   <span className="mt-1 block font-mono text-xs">
-                    Appel en cours — {minutes}:{secondesAffichees}
+                    Composition lancée — chronomètre {minutes}:{secondesAffichees}
                   </span>
                 )}
               </span>

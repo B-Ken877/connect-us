@@ -37,6 +37,7 @@ local-*
 
 # embedded postgres data (local development only)
 .pgdata
+.pgdata-test
 
 # local development database files
 /db/
