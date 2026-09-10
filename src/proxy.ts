@@ -28,8 +28,12 @@ export async function proxy(request: NextRequest) {
     if (chemin.startsWith("/api/")) {
       return NextResponse.json({ erreur: "SESSION_EXPIREE" }, { status: 401 });
     }
+    // Distinction UX : un visiteur sans cookie n'a pas de session « expirée » —
+    // il arrive pour la première fois. Seul un cookie présent mais invalide
+    // (session réellement expirée ou révoquée) justifie le message d'expiration.
+    const avaitCookie = Boolean(request.cookies.get(NOM_COOKIE)?.value);
     const url = new URL("/connexion", request.url);
-    url.searchParams.set("expiree", "1");
+    if (avaitCookie) url.searchParams.set("expiree", "1");
     return NextResponse.redirect(url);
   }
 
