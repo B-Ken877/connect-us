@@ -10,7 +10,7 @@ export const metadata = { title: "Tableau de bord — GIG Survey" };
 export const dynamic = "force-dynamic";
 
 export default async function PageTableauDeBord() {
-  await exigerAcces(["ADMINISTRATEUR", "GESTIONNAIRE"]);
+  await exigerAcces(["ADMINISTRATEUR"]);
   const stats = await statistiquesGestionnaire();
   const maxJour = Math.max(1, ...stats.entretiens7Jours.map((j) => j.total));
 

@@ -40,10 +40,8 @@ async function principal() {
 
   console.log("→ Utilisateurs…");
   const hash = await bcrypt.hash(MOT_DE_PASSE, 10);
-  const [admin, gestionnaire, superviseur, agent1, agent2, agent3] = await Promise.all([
+  const [admin, agent1, agent2, agent3] = await Promise.all([
     db.user.create({ data: { name: "Sophie Marchand", email: "admin@gig-survey.fr", role: "ADMINISTRATEUR", passwordHash: hash } }),
-    db.user.create({ data: { name: "Laurent Boissier", email: "gestionnaire@gig-survey.fr", role: "GESTIONNAIRE", passwordHash: hash } }),
-    db.user.create({ data: { name: "Nadia Kessler", email: "superviseur@gig-survey.fr", role: "SUPERVISEUR", passwordHash: hash } }),
     db.user.create({ data: { name: "Camille Fournier", email: "agent1@gig-survey.fr", role: "AGENT", passwordHash: hash } }),
     db.user.create({ data: { name: "Hugo Bertrand", email: "agent2@gig-survey.fr", role: "AGENT", passwordHash: hash } }),
     db.user.create({ data: { name: "Inès Roussel", email: "agent3@gig-survey.fr", role: "AGENT", passwordHash: hash } }),
@@ -80,7 +78,7 @@ async function principal() {
       description:
         "Questionnaire de démonstration à contenu fictif. Les candidats et propositions cités sont imaginaires et servent uniquement à tester la plateforme.",
       status: "BROUILLON",
-      createdById: gestionnaire.id,
+      createdById: admin.id,
     },
   });
 
@@ -387,7 +385,7 @@ async function principal() {
         severity: "FAIBLE",
         reason: "Signalement de démonstration déjà examiné — faux positif (doublon apparent vérifié et infirmé).",
         status: "FAUX_POSITIF",
-        reviewedById: superviseur.id,
+        reviewedById: admin.id,
         reviewedAt: new Date(),
         reviewComment: "Vérifié en écoute : entretien conforme (démo).",
       },
@@ -397,8 +395,8 @@ async function principal() {
   console.log("→ Audit & sessions agents…");
   await db.auditLog.createMany({
     data: [
-      { userId: gestionnaire.id, action: "ENQUETE_CREEE", entityType: "Survey", entityId: enquete.id, metadata: { titre: enquete.title } },
-      { userId: gestionnaire.id, action: "ENQUETE_PUBLIEE", entityType: "SurveyVersion", entityId: version1.id, metadata: { versionNumber: 1 } },
+      { userId: admin.id, action: "ENQUETE_CREEE", entityType: "Survey", entityId: enquete.id, metadata: { titre: enquete.title } },
+      { userId: admin.id, action: "ENQUETE_PUBLIEE", entityType: "SurveyVersion", entityId: version1.id, metadata: { versionNumber: 1 } },
       { userId: admin.id, action: "CONNEXION", entityType: "User", entityId: admin.id },
     ],
   });
@@ -410,8 +408,6 @@ async function principal() {
   console.log("\n✓ Seed terminé.");
   console.log("\n   Comptes de démonstration (mot de passe : Démo2026!) :");
   console.log("   - admin@gig-survey.fr         (Administrateur)");
-  console.log("   - gestionnaire@gig-survey.fr  (Gestionnaire)");
-  console.log("   - superviseur@gig-survey.fr   (Superviseur)");
   console.log("   - agent1@gig-survey.fr        (Agent — Camille)");
   console.log("   - agent2@gig-survey.fr        (Agent — Hugo)");
   console.log("   - agent3@gig-survey.fr        (Agent — Inès)");

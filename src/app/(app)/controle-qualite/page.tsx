@@ -28,7 +28,7 @@ export default async function PageControleQualite({
 }: {
   searchParams: Promise<{ statut?: string; type?: string }>;
 }) {
-  await exigerAcces(["ADMINISTRATEUR", "SUPERVISEUR"]);
+  await exigerAcces(["ADMINISTRATEUR"]);
   const filtres = await searchParams;
   const statut = STATUTS.includes(filtres.statut ?? "") ? filtres.statut! : "A_EXAMINER";
   const type = TYPES.includes(filtres.type ?? "") ? filtres.type! : "TOUS";

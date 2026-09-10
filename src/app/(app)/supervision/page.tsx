@@ -7,7 +7,7 @@ export const metadata = { title: "Tableau de supervision — GIG Survey" };
 export const dynamic = "force-dynamic";
 
 export default async function PageSupervision() {
-  await exigerAcces(["ADMINISTRATEUR", "SUPERVISEUR"]);
+  await exigerAcces(["ADMINISTRATEUR"]);
   const stats = await statistiquesSupervision();
 
   return (

@@ -8,13 +8,13 @@ import type { QuestionDef, ReponsesParCle } from "@/lib/survey-engine";
 import { depuisColonnes } from "@/lib/survey-engine";
 
 /**
- * CSV export of survey responses — GESTIONNAIRE / ADMINISTRATEUR only.
+ * CSV export of survey responses — ADMINISTRATEUR only.
  * The action is audited. PII columns (référence externe) require the
  * explicit `inclureIdentite=1` flag and are audited as well.
  */
 export async function GET(request: NextRequest) {
   try {
-    const utilisateur = await exigerRole(["ADMINISTRATEUR", "GESTIONNAIRE"]);
+    const utilisateur = await exigerRole(["ADMINISTRATEUR"]);
     const versionId = request.nextUrl.searchParams.get("versionId");
     if (!versionId) {
       return NextResponse.json({ erreur: "Paramètre versionId requis." }, { status: 400 });

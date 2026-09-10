@@ -3,14 +3,16 @@
  * SINGLE SOURCE OF TRUTH used by: middleware (edge), server guards, and
  * navigation rendering. Server-side enforcement is always re-applied inside
  * actions and route handlers (never rely on frontend checks alone).
+ *
+ * Two roles only: ADMINISTRATEUR manages everything (surveys, respondents,
+ * interviews, quality, accounts) and can also take calls; AGENT only runs
+ * the calling session.
  */
 
-export type RoleUtilisateur = "ADMINISTRATEUR" | "GESTIONNAIRE" | "SUPERVISEUR" | "AGENT";
+export type RoleUtilisateur = "ADMINISTRATEUR" | "AGENT";
 
 export const LIBELLES_ROLE: Record<RoleUtilisateur, string> = {
   ADMINISTRATEUR: "Administrateur",
-  GESTIONNAIRE: "Gestionnaire",
-  SUPERVISEUR: "Superviseur",
   AGENT: "Agent",
 };
 
@@ -21,20 +23,18 @@ export interface RegleAcces {
 
 export const REGLES_ACCES: RegleAcces[] = [
   { prefix: "/session", roles: ["AGENT", "ADMINISTRATEUR"] },
-  { prefix: "/tableau-de-bord", roles: ["ADMINISTRATEUR", "GESTIONNAIRE"] },
-  { prefix: "/enquetes", roles: ["ADMINISTRATEUR", "GESTIONNAIRE"] },
-  { prefix: "/repondants", roles: ["ADMINISTRATEUR", "GESTIONNAIRE", "SUPERVISEUR"] },
-  { prefix: "/entretiens", roles: ["ADMINISTRATEUR", "GESTIONNAIRE", "SUPERVISEUR"] },
-  { prefix: "/supervision", roles: ["ADMINISTRATEUR", "SUPERVISEUR"] },
-  { prefix: "/controle-qualite", roles: ["ADMINISTRATEUR", "SUPERVISEUR"] },
+  { prefix: "/tableau-de-bord", roles: ["ADMINISTRATEUR"] },
+  { prefix: "/enquetes", roles: ["ADMINISTRATEUR"] },
+  { prefix: "/repondants", roles: ["ADMINISTRATEUR"] },
+  { prefix: "/entretiens", roles: ["ADMINISTRATEUR"] },
+  { prefix: "/supervision", roles: ["ADMINISTRATEUR"] },
+  { prefix: "/controle-qualite", roles: ["ADMINISTRATEUR"] },
   { prefix: "/agents", roles: ["ADMINISTRATEUR"] },
   { prefix: "/parametres", roles: ["ADMINISTRATEUR"] },
 ];
 
 export const ACCUEIL_PAR_ROLE: Record<RoleUtilisateur, string> = {
   AGENT: "/session",
-  GESTIONNAIRE: "/tableau-de-bord",
-  SUPERVISEUR: "/supervision",
   ADMINISTRATEUR: "/tableau-de-bord",
 };
 

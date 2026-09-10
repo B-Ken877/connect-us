@@ -14,7 +14,7 @@ export default async function PageRepondants({
 }: {
   searchParams: Promise<{ q?: string; statut?: string; page?: string }>;
 }) {
-  await exigerAcces(["ADMINISTRATEUR", "GESTIONNAIRE", "SUPERVISEUR"]);
+  await exigerAcces(["ADMINISTRATEUR"]);
   const filtres = await searchParams;
   const page = Number(filtres.page ?? "1") || 1;
 

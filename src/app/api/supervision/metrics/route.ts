@@ -9,7 +9,7 @@ import { versMessageUtilisateur } from "@/lib/errors";
  */
 export async function GET() {
   try {
-    await exigerRole(["ADMINISTRATEUR", "SUPERVISEUR"]);
+    await exigerRole(["ADMINISTRATEUR"]);
     const stats = await statistiquesSupervision();
     return NextResponse.json(stats, {
       headers: { "Cache-Control": "no-store" },

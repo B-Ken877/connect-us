@@ -20,7 +20,7 @@ function erreur(cause: unknown): { succes: false; message: string; code?: CodeEr
   return { succes: false, message: versMessageUtilisateur(cause), code };
 }
 
-const ROLES_GESTION: RoleUtilisateur[] = ["ADMINISTRATEUR", "GESTIONNAIRE"];
+const ROLES_GESTION: RoleUtilisateur[] = ["ADMINISTRATEUR"];
 
 export async function actionCreerEnquete(formData: FormData): Promise<ResultatAction<{ id: string }>> {
   try {

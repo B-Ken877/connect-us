@@ -11,7 +11,7 @@ export const metadata = { title: "Enquêtes — GIG Survey" };
 export const dynamic = "force-dynamic";
 
 export default async function PageEnquetes() {
-  await exigerAcces(["ADMINISTRATEUR", "GESTIONNAIRE"]);
+  await exigerAcces(["ADMINISTRATEUR"]);
   const enquetes = await listerEnquetes();
 
   return (

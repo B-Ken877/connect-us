@@ -10,7 +10,7 @@ sans sur-ingénierie V1.
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│  Navigateur (agent / gestionnaire / superviseur / admin)           │
+│  Navigateur (agent / administrateur)                                 │
 │  React 19 · composants clients légers · polling court             │
 └───────────────▲────────────────────────────────────────────────────┘
                 │ Server Actions (mutations, CSRF-safe)
@@ -130,7 +130,7 @@ conversion valeur canonique ⇄ colonnes est centralisée dans
 **Décision** : 5 règles pures (`lib/quality/rules.ts`) qui reçoivent des
 entrées explicites et retournent des *propositions* de signalement ; le service
 d'entretien les évalue **dans la transaction de soumission** et insère des
-`QualityFlag` à examiner. La revue superviseur (À examiner/Validé/Rejeté/Faux
+`QualityFlag` à examiner. La revue qualité par l'administrateur (À examiner/Validé/Rejeté/Faux
 positif) est auditée et met à jour `Interview.qualityStatus` — sans jamais
 effacer ni réécrire des réponses.
 

@@ -18,7 +18,7 @@ export default async function PageEntretiens({
 }: {
   searchParams: Promise<{ statut?: string; qualite?: string; page?: string }>;
 }) {
-  await exigerAcces(["ADMINISTRATEUR", "GESTIONNAIRE", "SUPERVISEUR"]);
+  await exigerAcces(["ADMINISTRATEUR"]);
   const filtres = await searchParams;
   const page = Number(filtres.page ?? "1") || 1;
 

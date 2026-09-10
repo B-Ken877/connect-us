@@ -9,7 +9,7 @@ export const metadata = { title: "Édition de l'enquête — GIG Survey" };
 
 export default async function PageEditionEnquete({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await exigerAcces(["ADMINISTRATEUR", "GESTIONNAIRE"]);
+  await exigerAcces(["ADMINISTRATEUR"]);
 
   let enquete;
   try {

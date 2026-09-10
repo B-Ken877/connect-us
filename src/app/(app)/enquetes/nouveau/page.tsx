@@ -5,7 +5,7 @@ import { FormulaireEnquete } from "@/components/app/formulaire-enquete";
 export const metadata = { title: "Nouvelle enquête — GIG Survey" };
 
 export default async function PageNouvelleEnquete() {
-  await exigerAcces(["ADMINISTRATEUR", "GESTIONNAIRE"]);
+  await exigerAcces(["ADMINISTRATEUR"]);
   return (
     <div className="mx-auto max-w-6xl">
       <EnTetePage titre="Créer une enquête" description="Les questionnaires sont construits sans intervention technique." />

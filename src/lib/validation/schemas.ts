@@ -128,7 +128,7 @@ export const schemaResultatAppel = z
 export const schemaUtilisateur = z.object({
   name: z.string().trim().min(2, "Le nom est requis.").max(120),
   email: z.string().trim().toLowerCase().email("Adresse e-mail invalide.").max(200),
-  role: z.enum(["ADMINISTRATEUR", "GESTIONNAIRE", "SUPERVISEUR", "AGENT"]),
+  role: z.enum(["ADMINISTRATEUR", "AGENT"]),
   motDePasse: z.string().min(8, "8 caractères minimum.").max(200).optional(),
   active: z.boolean().default(true),
 });

@@ -28,13 +28,13 @@ interface ElementMenu {
 }
 
 const MENU: ElementMenu[] = [
-  { href: "/tableau-de-bord", libelle: "Tableau de bord", icone: LayoutDashboard, roles: ["ADMINISTRATEUR", "GESTIONNAIRE"] },
+  { href: "/tableau-de-bord", libelle: "Tableau de bord", icone: LayoutDashboard, roles: ["ADMINISTRATEUR"] },
   { href: "/session", libelle: "Session d'appels", icone: PhoneCall, roles: ["AGENT", "ADMINISTRATEUR"] },
-  { href: "/enquetes", libelle: "Enquêtes", icone: ClipboardList, roles: ["ADMINISTRATEUR", "GESTIONNAIRE"] },
-  { href: "/repondants", libelle: "Répondants", icone: Users, roles: ["ADMINISTRATEUR", "GESTIONNAIRE", "SUPERVISEUR"] },
-  { href: "/entretiens", libelle: "Entretiens", icone: UserCheck, roles: ["ADMINISTRATEUR", "GESTIONNAIRE", "SUPERVISEUR"] },
-  { href: "/supervision", libelle: "Tableau de supervision", icone: Activity, roles: ["ADMINISTRATEUR", "SUPERVISEUR"] },
-  { href: "/controle-qualite", libelle: "Contrôle qualité", icone: ShieldCheck, roles: ["ADMINISTRATEUR", "SUPERVISEUR"] },
+  { href: "/enquetes", libelle: "Enquêtes", icone: ClipboardList, roles: ["ADMINISTRATEUR"] },
+  { href: "/repondants", libelle: "Répondants", icone: Users, roles: ["ADMINISTRATEUR"] },
+  { href: "/entretiens", libelle: "Entretiens", icone: UserCheck, roles: ["ADMINISTRATEUR"] },
+  { href: "/supervision", libelle: "Tableau de supervision", icone: Activity, roles: ["ADMINISTRATEUR"] },
+  { href: "/controle-qualite", libelle: "Contrôle qualité", icone: ShieldCheck, roles: ["ADMINISTRATEUR"] },
   { href: "/agents", libelle: "Agents & comptes", icone: Settings, roles: ["ADMINISTRATEUR"] },
 ];
 

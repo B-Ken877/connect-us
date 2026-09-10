@@ -22,7 +22,7 @@ export default async function PageApercu({
 }) {
   const { id } = await params;
   const { version: versionId } = await searchParams;
-  await exigerAcces(["ADMINISTRATEUR", "GESTIONNAIRE"]);
+  await exigerAcces(["ADMINISTRATEUR"]);
 
   let version;
   try {

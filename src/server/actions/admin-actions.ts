@@ -73,7 +73,7 @@ export async function actionMajUtilisateur(
 
 // --------------------------- Respondents (pool) ---------------------------
 
-const ROLES_RESPONDANTS: RoleUtilisateur[] = ["ADMINISTRATEUR", "GESTIONNAIRE", "SUPERVISEUR"];
+const ROLES_RESPONDANTS: RoleUtilisateur[] = ["ADMINISTRATEUR"];
 
 export async function actionCreerRepondant(donnees: unknown): Promise<ResultatAction<{ id: string }>> {
   try {
@@ -114,7 +114,7 @@ export async function actionImporterRepondants(contenu: string): Promise<
   ResultatAction<{ soumis: number; crees: number }>
 > {
   try {
-    const acteur = await exigerRole(["ADMINISTRATEUR", "GESTIONNAIRE"]);
+    const acteur = await exigerRole(["ADMINISTRATEUR"]);
     const resultat = await importerRepondants({ acteurId: acteur.id, contenu });
     revalidatePath("/repondants");
     return { succes: true, data: resultat };
@@ -131,11 +131,11 @@ export async function actionExaminerSignalement(params: {
   commentaire?: string;
 }): Promise<ResultatAction> {
   try {
-    const superviseur = await exigerRole(["ADMINISTRATEUR", "SUPERVISEUR"]);
+    const examinateur = await exigerRole(["ADMINISTRATEUR"]);
     const parse = schemaExamenSignalement.safeParse(params);
     if (!parse.success) throw new AppError("VALIDATION", "Examen invalide.");
     await examinerSignalement({
-      superviseurId: superviseur.id,
+      superviseurId: examinateur.id,
       signalementId: parse.data.signalementId,
       statut: parse.data.statut,
       commentaire: parse.data.commentaire || undefined,

@@ -5,16 +5,17 @@ import { obtenirEnquete } from "@/server/services/survey-service";
 import { EnTetePage } from "@/components/app/primitives";
 import { BadgeStatutVersion } from "@/components/app/badges-enquete";
 import { ActionsVersion } from "@/components/app/actions-version";
+import { NouvelleVersionBouton } from "@/components/app/nouvelle-version-bouton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateHeureFr } from "@/lib/format";
-import { FileDown, Eye, PencilLine } from "lucide-react";
+import { FileDown, Eye, PencilLine, Info } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function PageEnquete({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await exigerAcces(["ADMINISTRATEUR", "GESTIONNAIRE"]);
+  await exigerAcces(["ADMINISTRATEUR"]);
 
   let enquete;
   try {
@@ -39,16 +40,29 @@ export default async function PageEnquete({ params }: { params: Promise<{ id: st
                 </Link>
               </Button>
             )}
-            {brouillon && (
+            {brouillon ? (
               <Button asChild className="gap-2">
                 <Link href={`/enquetes/${enquete.id}/edition`}>
                   <PencilLine className="h-4 w-4" /> Éditer le brouillon
                 </Link>
               </Button>
+            ) : (
+              <NouvelleVersionBouton enqueteId={enquete.id} />
             )}
           </>
         }
       />
+
+      {!brouillon && (
+        <div className="mb-6 flex items-start gap-2.5 rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />
+          <p>
+            Les versions publiées sont <strong>immuables</strong> : pour modifier, ajouter ou
+            supprimer des questions, cliquez sur <strong>Nouvelle version</strong> — un brouillon
+            copié de la dernière version sera créé, que vous pourrez éditer librement puis publier.
+          </p>
+        </div>
+      )}
 
       <Card className="mb-6">
         <CardHeader className="pb-3">

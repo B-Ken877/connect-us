@@ -30,8 +30,6 @@ datasource db {
 
 enum Role {
   ADMINISTRATEUR
-  GESTIONNAIRE
-  SUPERVISEUR
   AGENT
 }
 

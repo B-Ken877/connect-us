@@ -34,7 +34,7 @@ export async function verifierTokenSession(token: string): Promise<PayloadSessio
       return null;
     }
     const role = payload.role as RoleUtilisateur;
-    if (!["ADMINISTRATEUR", "GESTIONNAIRE", "SUPERVISEUR", "AGENT"].includes(role)) return null;
+    if (!["ADMINISTRATEUR", "AGENT"].includes(role)) return null;
     return { sub: payload.sub, nom: payload.nom, role };
   } catch {
     return null;

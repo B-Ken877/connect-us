@@ -6,29 +6,28 @@ import { signatureReponses } from "@/lib/survey-engine/coherence";
 import type { QuestionDef } from "@/lib/survey-engine/types";
 
 describe("Autorisation — matrice rôles / routes", () => {
-  it("l'agent accède à /session mais pas à /enquetes", () => {
+  it("l'agent accède à /session mais pas aux espaces de gestion", () => {
     expect(accesAutorise("/session", "AGENT")).toBe(true);
     expect(accesAutorise("/session/appel/xyz", "AGENT")).toBe(true);
     expect(accesAutorise("/enquetes", "AGENT")).toBe(false);
     expect(accesAutorise("/supervision", "AGENT")).toBe(false);
+    expect(accesAutorise("/repondants", "AGENT")).toBe(false);
+    expect(accesAutorise("/agents", "AGENT")).toBe(false);
   });
 
-  it("le gestionnaire gère les enquêtes mais pas la supervision", () => {
-    expect(accesAutorise("/enquetes", "GESTIONNAIRE")).toBe(true);
-    expect(accesAutorise("/tableau-de-bord", "GESTIONNAIRE")).toBe(true);
-    expect(accesAutorise("/supervision", "GESTIONNAIRE")).toBe(false);
-    expect(accesAutorise("/agents", "GESTIONNAIRE")).toBe(false);
-  });
-
-  it("le superviseur supervise et examine la qualité", () => {
-    expect(accesAutorise("/supervision", "SUPERVISEUR")).toBe(true);
-    expect(accesAutorise("/controle-qualite", "SUPERVISEUR")).toBe(true);
-    expect(accesAutorise("/entretiens", "SUPERVISEUR")).toBe(true);
-    expect(accesAutorise("/enquetes/nouveau", "SUPERVISEUR")).toBe(false);
-  });
-
-  it("l'administrateur a accès partout", () => {
-    for (const chemin of ["/session", "/enquetes", "/supervision", "/controle-qualite", "/agents", "/parametres"]) {
+  it("l'administrateur a accès partout (appel, gestion, qualité, comptes)", () => {
+    for (const chemin of [
+      "/session",
+      "/tableau-de-bord",
+      "/enquetes",
+      "/enquetes/nouveau",
+      "/repondants",
+      "/entretiens",
+      "/supervision",
+      "/controle-qualite",
+      "/agents",
+      "/parametres",
+    ]) {
       expect(accesAutorise(chemin, "ADMINISTRATEUR")).toBe(true);
     }
   });
@@ -46,8 +45,6 @@ describe("Autorisation — matrice rôles / routes", () => {
 
   it("chaque rôle a une page d'accueil", () => {
     expect(ACCUEIL_PAR_ROLE.AGENT).toBe("/session");
-    expect(ACCUEIL_PAR_ROLE.GESTIONNAIRE).toBe("/tableau-de-bord");
-    expect(ACCUEIL_PAR_ROLE.SUPERVISEUR).toBe("/supervision");
     expect(ACCUEIL_PAR_ROLE.ADMINISTRATEUR).toBe("/tableau-de-bord");
   });
 });
