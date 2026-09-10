@@ -146,7 +146,10 @@ effacer ni réécrire des réponses.
 ### ADR-07 — Composeur : abstraction, aucune fausse téléphonie
 
 **Décision** : interface `DialerProvider` (registry serveur sans `window` +
-`initierAppel()` client). V1 = `native` : `window.location.href = "tel:…"`.
+`initierAppel()` client). V1 = `native` : le numéro est normalisé en E.164
+(`lib/dialer/numero.ts`, règles Haïti déterministes) puis l'URI `tel:` est
+transmise au système par clic d'ancre — le geste utilisateur standard, sans
+navigation ni minuteur. Poste cible : Windows + Phone Link.
 
 **Pourquoi** : pas d'API téléphonie en V1 — la plateforme ne doit **ni simuler
 des appels, ni inventer des états d'appel**. L'agent compose, parle, puis

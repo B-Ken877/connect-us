@@ -94,6 +94,7 @@ export function EspaceEntretien({
   const [secondes, setSecondes] = useState(0);
   const [appelVerrouilleUI, setAppelVerrouilleUI] = useState(false);
   const verrouAppel = useRef(false);
+  const minuteurRepos = useRef<ReturnType<typeof setTimeout> | null>(null);
   const verrouCloture = useRef(false);
 
   // Restore the dialer launch after an app switch (native dialer on mobile).
@@ -126,6 +127,14 @@ export function EspaceEntretien({
     return () => clearInterval(t);
   }, [debutAppel]);
 
+  // Clear the post-dial cooldown timer on unmount (never touch state after
+  // the workspace is gone).
+  useEffect(() => {
+    return () => {
+      if (minuteurRepos.current) clearTimeout(minuteurRepos.current);
+    };
+  }, []);
+
   // Leave guard: leaving must never abandon — a reload/close prompt protects
   // against losing the workspace context; the interview stays resumable.
   useEffect(() => {
@@ -156,7 +165,6 @@ export function EspaceEntretien({
       callAttemptId: appel.id,
     });
     verrouAppel.current = false;
-    setAppelVerrouilleUI(false);
     if (resultatDialer.statut === "INITIE") {
       const t = Date.now();
       setEtatAppel("lance");
@@ -171,7 +179,16 @@ export function EspaceEntretien({
       } catch {
         /* ignore */
       }
+      // Short cooldown against accidental double invocation of the OS dialer
+      // (double-clicks cannot create duplicate CallAttempts — dialing is
+      // purely client-side and the attempt already exists — this only protects
+      // against double protocol hand-off). The button restores itself;
+      // re-dialing stays possible afterwards.
+      if (minuteurRepos.current) clearTimeout(minuteurRepos.current);
+      minuteurRepos.current = setTimeout(() => setAppelVerrouilleUI(false), 3_000);
     } else {
+      // Failure: immediate retry is allowed.
+      setAppelVerrouilleUI(false);
       setEtatAppel("non_pris_en_charge");
       setMessageAppel(
         resultatDialer.message ??

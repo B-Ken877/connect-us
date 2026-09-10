@@ -100,6 +100,7 @@ export function EnteteRepondant({
             className="h-12 gap-2 text-base"
             onClick={surAppeler}
             disabled={appelVerrouille}
+            aria-label="Appeler le répondant au numéro affiché"
           >
             {appelVerrouille ? (
               <LoaderCircle className="h-5 w-5 animate-spin" />

@@ -169,6 +169,22 @@ interface DialerProvider {
 
 - **V1 = `NativeDialerProvider`** : le bouton « Appeler » délègue la composition à l'appareil via `tel:` ; la plateforme reste maîtresse du file, des tentatives, des issues et des rappels. **Aucune fausse téléphonie.**
 - Le futur `TelephonyApiDialerProvider` (mode serveur) se branchera via `/api/appels/[id]/composer` et le registry — **sans toucher** aux enquêtes, entretiens, supervision, qualité ni au modèle de données.
+- Normalisation déterministe (`lib/dialer/numero.ts`) : `+509 3700-0000`, `509 3700 0000`, `00509…` et les numéros locaux haïtiens à 8 chiffres sont normalisés en E.164 (`+509XXXXXXXX`) ; un format ambigu reste en chiffres nus (jamais de code pays inventé). L'URI exacte transmise au système est affichée dans la confirmation d'appel.
+
+## Appels depuis Windows avec Microsoft Phone Link
+
+Le bouton « Appeler » transmet le numéro au gestionnaire `tel:` du système — sur le poste de l'agent, c'est **Microsoft Phone Link** :
+
+1. L'agent travaille sur un **PC Windows**, GIG Survey ouvert dans le navigateur.
+2. **Microsoft Phone Link** (préinstallé sur Windows 10/11) est configuré.
+3. Le **téléphone Android** de l'agent contient la **SIM** (réseau cellulaire de l'opérateur).
+4. Le téléphone est **appairé** avec Windows via « Gestionnaire de téléphone mobile » / *Link to Windows*.
+5. Windows associe le protocole **`tel:`** à Phone Link (Paramètres → Applications → Applications par défaut).
+6. Dans GIG Survey, « Appeler » transmet **`tel:+509XXXXXXXX`** (numéro du répondant affiché dans l'entête, normalisé E.164). La page ne change jamais : le questionnaire reste ouvert, l'agent revient à la fenêtre et saisit les réponses.
+7. **L'appel cellulaire réel est passé par le téléphone et son opérateur.** GIG Survey n'a pas d'état d'appel autoritaire : il affiche « Composition lancée » (jamais « Appel en cours ») et un chronomètre d'interface explicitement libellé comme tel.
+8. L'issue réelle (réponse, refus, rappel…) est enregistrée par l'agent à la disposition, comme avant.
+
+Si Phone Link n'est pas installé, non appairé, ou si un autre gestionnaire `tel:` est configuré, le système ouvre ce gestionnaire à la place ; l'application reste utilisable dans tous les cas (numéro affiché et copiable, message explicite si la composition échoue). Vérification rapide du poste : cliquer « Appeler » doit afficher l'URI exacte (`tel:+509…`) sous le bouton et ouvrir Phone Link avec le numéro prérempli.
 
 ## Sécurité
 
@@ -181,7 +197,7 @@ interface DialerProvider {
 
 ## Exports
 
-`GET /api/export/entretiens?versionId=…[&inclureIdentite=1]` — réservé `GESTIONNAIRE`/`ADMINISTRATEUR`, **journalisé dans l'audit**. CSV RFC 4180 (séparateur `;`, BOM UTF-8 pour Excel), une colonne par question. La couche `lib/export` est conçue pour accueillir un export XLSX sans toucher aux services.
+`GET /api/export/entretiens?versionId=…[&inclureIdentite=1]` — réservé `ADMINISTRATEUR`, **journalisé dans l'audit**. CSV RFC 4180 (séparateur `;`, BOM UTF-8 pour Excel), une colonne par question. La couche `lib/export` est conçue pour accueillir un export XLSX sans toucher aux services.
 
 ---
 
