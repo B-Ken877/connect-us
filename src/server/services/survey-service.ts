@@ -30,6 +30,7 @@ export async function obtenirEnquete(id: string) {
     where: { id },
     include: {
       createdBy: { select: { id: true, name: true } },
+      updatedBy: { select: { id: true, name: true } },
       versions: {
         orderBy: { versionNumber: "desc" },
         include: { _count: { select: { questions: true, interviews: true } } },
@@ -394,4 +395,76 @@ export async function majConfigVersion(params: {
     where: { id: params.versionId },
     data: { config: params.config as Prisma.InputJsonValue },
   });
+}
+
+// ------------------- UNITED Research — script d'introduction -------------------
+
+/**
+ * Met à jour le script d'introduction d'une campagne.
+ * Le script est stocké sur la campagne (pas sur la version) car il change
+ * rarement et doit rester identique across versions. L'historique des
+ * versions immuables protège les questions/réponses, pas le script.
+ *
+ * Cette mise à jour est DONC autorisée même si la campagne est publiée.
+ * L'action est journalisée pour traçabilité.
+ */
+export async function majScriptEnquete(params: {
+  utilisateurId: string;
+  surveyId: string;
+  openingScript: string;
+  candidateName?: string;
+  campaignInstructions?: string;
+  complianceMessage?: string;
+  contactInfo?: string;
+}) {
+  const enquete = await db.survey.findUnique({ where: { id: params.surveyId } });
+  if (!enquete) throw new AppError("INTROUVABLE", "Campagne introuvable.");
+
+  await db.survey.update({
+    where: { id: params.surveyId },
+    data: {
+      openingScript: params.openingScript,
+      candidateName: params.candidateName || null,
+      campaignInstructions: params.campaignInstructions || null,
+      complianceMessage: params.complianceMessage || null,
+      contactInfo: params.contactInfo || null,
+      updatedById: params.utilisateurId,
+    },
+  });
+
+  await enregistrerAudit({
+    userId: params.utilisateurId,
+    action: ACTIONS_AUDIT.SCRIPT_MODIFIE,
+    entityType: "Survey",
+    entityId: params.surveyId,
+    metadata: {
+      longueurScript: params.openingScript.length,
+      candidat: params.candidateName || null,
+    },
+  });
+}
+
+/**
+ * Retourne la campagne active (publiée) avec son script et ses champs.
+ * Utilisé par l'espace agent pour afficher le script d'introduction.
+ */
+export async function obtenirCampagneActive() {
+  const enquete = await db.survey.findFirst({
+    where: { status: "PUBLIEE" },
+    include: {
+      versions: {
+        where: { status: "PUBLIEE" },
+        orderBy: { versionNumber: "desc" },
+        take: 1,
+        include: {
+          questions: {
+            orderBy: { order: "asc" },
+            select: { id: true, key: true, text: true, type: true, required: true, order: true },
+          },
+        },
+      },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+  return enquete;
 }

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BadgeAgent } from "@/components/app/badges";
-import { PhoneCall, Pause, Play, LoaderCircle, ShieldAlert, UserRound } from "lucide-react";
+import { PhoneCall, Pause, Play, LoaderCircle, ShieldAlert, UserRound, FileText } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   actionDemarrerSession,
@@ -21,6 +21,7 @@ interface Props {
   statsInitiales: StatsAgent;
   entretienActif: { interviewId: string; nom: string | null; telephone: string } | null;
   versionActive: { titre: string; versionNumber: number; nbQuestions: number } | null;
+  scriptIntro?: { script: string; candidat?: string | null; conformite?: string | null } | null;
   dialer: DialerMeta;
 }
 
@@ -28,8 +29,11 @@ interface Props {
  * AGENT DASHBOARD — deliberately calm. One primary action (resume the active
  * interview, or call the next respondent), presence control, and TODAY'S
  * stats kept visually secondary: numbers never compete with the workflow.
+ *
+ * UNITED Research: le script d'introduction est affiché en grand quand
+ * disponible — c'est l'élément le plus important pour l'agent.
  */
-export function ConsoleAgent({ prenom, nomComplet, statsInitiales, entretienActif, versionActive, dialer }: Props) {
+export function ConsoleAgent({ prenom, nomComplet, statsInitiales, entretienActif, versionActive, scriptIntro, dialer }: Props) {
   const router = useRouter();
   const [stats, setStats] = useState<StatsAgent>(statsInitiales);
   const [entretien, setEntretien] = useState(entretienActif);
@@ -185,6 +189,35 @@ export function ConsoleAgent({ prenom, nomComplet, statsInitiales, entretienActi
               <p className="mt-3 text-center text-xs text-muted-foreground">
                 Enquête active : {versionActive.titre} — version {versionActive.versionNumber} ({versionActive.nbQuestions} questions)
               </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Script d'introduction — UNITED Research — élément visuellement dominant */}
+      {scriptIntro && scriptIntro.script && (
+        <Card className="border-primary/20 bg-card">
+          <CardHeader className="pb-3">
+            {scriptIntro.candidat && (
+              <p className="libelle-section mb-1 text-primary">{scriptIntro.candidat}</p>
+            )}
+            <CardTitle className="flex items-center gap-2 text-base">
+              <FileText className="h-4 w-4 text-primary" />
+              Script d&apos;introduction
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {scriptIntro.script.split("\n").map((ligne, i) => (
+                <p key={i} className="text-base leading-relaxed text-foreground">
+                  {ligne || "\u00A0"}
+                </p>
+              ))}
+            </div>
+            {scriptIntro.conformite && (
+              <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3">
+                <p className="text-xs text-amber-900">{scriptIntro.conformite}</p>
+              </div>
             )}
           </CardContent>
         </Card>

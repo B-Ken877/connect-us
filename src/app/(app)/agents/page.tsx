@@ -2,6 +2,8 @@ import { exigerAcces } from "@/lib/auth/session";
 import { listerUtilisateurs } from "@/server/services/user-service";
 import { EnTetePage } from "@/components/app/primitives";
 import { GestionUtilisateurs } from "@/components/app/gestion-utilisateurs";
+import { CreationAgentsEnMasse } from "@/components/app/creation-agents-masse";
+import { ReinitialiserMotDePasse } from "@/components/app/reinitialiser-mot-de-passe";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDateHeureFr } from "@/lib/format";
@@ -27,13 +29,14 @@ export default async function PageAgents() {
     <div className="mx-auto max-w-6xl">
       <EnTetePage
         titre="Agents & comptes"
-        description="Gestion des comptes du centre : création, rôles, activation. Toute modification de rôle est journalisée."
+        description="Gestion des comptes du centre : création, rôles, activation. Toute modification est journalisée."
+        actions={<CreationAgentsEnMasse />}
       />
 
       <GestionUtilisateurs utilisateurs={serialized} utilisateurCourantId={session.sub} />
 
-      <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+      <div className="mt-6 overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+        <div className="border-b border-border bg-muted/50 px-4 py-3">
           <p className="libelle-section">Comptes existants</p>
         </div>
         <Table>
@@ -43,7 +46,9 @@ export default async function PageAgents() {
               <TableHead className="hidden md:table-cell">E-mail</TableHead>
               <TableHead>Rôle</TableHead>
               <TableHead>État</TableHead>
+              <TableHead className="hidden lg:table-cell">Dernière connexion</TableHead>
               <TableHead className="hidden lg:table-cell">Créé le</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -52,7 +57,7 @@ export default async function PageAgents() {
                 <TableCell className="font-medium">{u.name}</TableCell>
                 <TableCell className="hidden text-sm text-muted-foreground md:table-cell">{u.email}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className="border-slate-200 bg-slate-50">
+                  <Badge variant="outline" className="border-border bg-muted">
                     {LIBELLES_ROLE[u.role as RoleUtilisateur]}
                   </Badge>
                 </TableCell>
@@ -64,7 +69,15 @@ export default async function PageAgents() {
                   )}
                 </TableCell>
                 <TableCell className="hidden text-sm text-muted-foreground lg:table-cell">
+                  {u.lastLoginAt ? formatDateHeureFr(u.lastLoginAt) : "Jamais"}
+                </TableCell>
+                <TableCell className="hidden text-sm text-muted-foreground lg:table-cell">
                   {formatDateHeureFr(u.createdAt)}
+                </TableCell>
+                <TableCell>
+                  {u.role === "AGENT" && u.id !== session.sub && (
+                    <ReinitialiserMotDePasse utilisateurId={u.id} />
+                  )}
                 </TableCell>
               </TableRow>
             ))}

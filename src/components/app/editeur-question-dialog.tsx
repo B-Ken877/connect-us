@@ -74,7 +74,7 @@ export function EditeurQuestionDialog({
   const [texte, setTexte] = useState(questionInitiale?.text ?? "");
   const [cle, setCle] = useState(questionInitiale?.key ?? "");
   const [aide, setAide] = useState(questionInitiale?.helpText ?? "");
-  const [type, setType] = useState<TypeQuestion>(questionInitiale?.type ?? "CHOIX_UNIQUE");
+  const [type, setType] = useState<TypeQuestion>(questionInitiale?.type ?? "TEXTE_LONG");
   const [obligatoire, setObligatoire] = useState(questionInitiale?.required ?? false);
   const [options, setOptions] = useState<{ label: string; value: string }[]>(
     questionInitiale?.options.map((o) => ({ label: o.label, value: o.value })) ?? [{ label: "", value: "" }],
@@ -95,7 +95,7 @@ export function EditeurQuestionDialog({
       setTexte(questionInitiale?.text ?? "");
       setCle(questionInitiale?.key ?? "");
       setAide(questionInitiale?.helpText ?? "");
-      setType(questionInitiale?.type ?? "CHOIX_UNIQUE");
+      setType(questionInitiale?.type ?? "TEXTE_LONG");
       setObligatoire(questionInitiale?.required ?? false);
       setOptions(questionInitiale?.options.map((o) => ({ label: o.label, value: o.value })) ?? [{ label: "", value: "" }]);
       setCfg((questionInitiale?.configuration ?? {}) as Record<string, unknown>);
@@ -138,7 +138,8 @@ export function EditeurQuestionDialog({
         key: cle,
         text: texte.trim(),
         helpText: aide.trim(),
-        type,
+        // UNITED Research MVP: forcer TEXTE_LONG (réponse libre) pour toutes les nouvelles questions.
+        type: "TEXTE_LONG",
         required: obligatoire,
         configuration: cfg,
         validationRules: motif.trim() ? { motif: motif.trim(), message: messageMotif.trim() || undefined } : null,
@@ -202,20 +203,17 @@ export function EditeurQuestionDialog({
               />
               <p className="text-xs text-muted-foreground">Identifiant technique (statistiques, exports, logique).</p>
             </div>
+            {/* UNITED Research MVP: seul le type TEXTE_LONG (réponse libre) est exposé.
+                Les autres types restent dans le moteur (compatibilité) mais sont masqués de l'UI. */}
             <div className="space-y-1.5">
               <Label htmlFor="q-type">Type de question</Label>
-              <Select value={type} onValueChange={(v) => setType(v as TypeQuestion)}>
-                <SelectTrigger id="q-type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(LIBELLES_TYPE_QUESTION).map(([valeur, libelle]) => (
-                    <SelectItem key={valeur} value={valeur}>
-                      {libelle}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                id="q-type"
+                value="Réponse libre (texte)"
+                disabled
+                className="bg-muted/50"
+              />
+              <p className="text-xs text-muted-foreground">Réponse libre — l&apos;agent saisit le texte librement.</p>
             </div>
           </div>
 
@@ -232,7 +230,10 @@ export function EditeurQuestionDialog({
             <Switch checked={obligatoire} onCheckedChange={setObligatoire} aria-label="Réponse obligatoire" />
           </div>
 
-          {TYPES_AVEC_OPTIONS.includes(type) && (
+          {/* UNITED Research MVP: masquer les panneaux de configuration des types complexes
+              (options, nombre, échelle). Seul TEXTE_LONG est exposé. Le code reste pour
+              compatibilité future. */}
+          {false && TYPES_AVEC_OPTIONS.includes(type) && (
             <div className="rounded-lg border border-slate-200 p-4">
               <p className="text-sm font-medium">Options de réponse</p>
               <div className="mt-3 space-y-2">
@@ -282,7 +283,7 @@ export function EditeurQuestionDialog({
             </div>
           )}
 
-          {type === "NOMBRE" && (
+          {false && type === "NOMBRE" && (
             <div className="grid grid-cols-2 gap-3 rounded-lg border border-slate-200 p-4 sm:grid-cols-4">
               <div className="space-y-1.5">
                 <Label>Min</Label>
@@ -305,7 +306,7 @@ export function EditeurQuestionDialog({
             </div>
           )}
 
-          {(type === "TEXTE_COURT" || type === "TEXTE_LONG") && (
+          {false && (type === "TEXTE_COURT" || type === "TEXTE_LONG") && (
             <div className="grid grid-cols-2 gap-3 rounded-lg border border-slate-200 p-4 sm:grid-cols-3">
               <div className="space-y-1.5">
                 <Label>Longueur min</Label>
@@ -323,7 +324,7 @@ export function EditeurQuestionDialog({
             </div>
           )}
 
-          {type === "ECHELLE" && (
+          {false && type === "ECHELLE" && (
             <div className="grid grid-cols-2 gap-3 rounded-lg border border-slate-200 p-4 sm:grid-cols-4">
               <div className="space-y-1.5">
                 <Label>Note minimale</Label>
@@ -350,6 +351,9 @@ export function EditeurQuestionDialog({
             </div>
           )}
 
+          {/* UNITED Research MVP: masquer la logique conditionnelle complexe.
+              Le moteur la supporte, mais l'UI MVP reste simple. */}
+          {false && (
           <div className="rounded-lg border border-slate-200 p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -458,6 +462,7 @@ export function EditeurQuestionDialog({
               </div>
             )}
           </div>
+          )}
 
           {erreur && <p className="text-sm font-medium text-red-600" role="alert">{erreur}</p>}
         </div>

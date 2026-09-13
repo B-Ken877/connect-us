@@ -37,6 +37,9 @@ enum StatutEnquete {
   BROUILLON
   PUBLIEE
   ARCHIVEE
+  // ---- Extensions UNITED Research (additif) ----
+  EN_PAUSE    // Campagne publiée mais temporairement suspendue
+  TERMINEE    // Campagne achevée (collecte terminée)
 }
 
 enum StatutVersionEnquete {
@@ -75,6 +78,10 @@ enum StatutAppel {
   REFUS
   RAPPEL
   ABANDONNE
+  // ---- Extensions UNITED Research (additif) ----
+  MESSAGERIE        // Messagerie vocale (voicemail)
+  NE_PAS_RAPPELER   // Le contact a demandé à ne plus être appelé (opt-out)
+  AUTRE             // Autre issue (notes requises)
 }
 
 enum StatutEntretien {
@@ -126,16 +133,22 @@ enum StatutAgent {
 // ----------------------------------------------------------------------------
 
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         Role
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                  String    @id @default(cuid())
+  name                String
+  email               String    @unique
+  passwordHash        String
+  role                Role
+  active              Boolean   @default(true)
+  // Force le changement de mot de passe à la prochaine connexion
+  // (utilisé pour les comptes créés en masse + reset admin).
+  mustChangePassword  Boolean   @default(false)
+  // Dernière connexion réussie — pour le tableau de bord admin.
+  lastLoginAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   createdSurveys    Survey[]         @relation("SurveyCreator")
+  updatedSurveys    Survey[]         @relation("SurveyUpdater")
   interviews        Interview[]      @relation("InterviewAgent")
   callAttempts      CallAttempt[]    @relation("CallAgent")
   agentSessions     AgentSession[]
@@ -185,10 +198,27 @@ model Survey {
   description String?
   status      StatutEnquete @default(BROUILLON)
   createdById String
+  updatedById String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
+  // ---- Champs spécifiques à l'appel politique (UNITED Research) ----
+  // Nom du candidat ou de la campagne affiché aux agents.
+  candidateName        String?
+  // Script d'introduction lu par l'agent en début d'appel.
+  // Stocké sur la campagne (pas sur la version) car il change rarement et
+  // doit rester identique across versions. L'historique des versions
+  // immuables protège les questions/réponses, pas le script.
+  openingScript        String?
+  // Instructions de campagne optionnelles (consignes opérationnelles).
+  campaignInstructions String?
+  // Message de conformité/opt-out affiché aux agents.
+  complianceMessage    String?
+  // Coordonnées de la campagne (contact, organisation).
+  contactInfo          String?
+
   createdBy  User            @relation("SurveyCreator", fields: [createdById], references: [id])
+  updatedBy  User?           @relation("SurveyUpdater", fields: [updatedById], references: [id])
   versions   SurveyVersion[]
 
   @@index([status])

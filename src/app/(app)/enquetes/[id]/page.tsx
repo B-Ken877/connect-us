@@ -6,6 +6,7 @@ import { EnTetePage } from "@/components/app/primitives";
 import { BadgeStatutVersion } from "@/components/app/badges-enquete";
 import { ActionsVersion } from "@/components/app/actions-version";
 import { NouvelleVersionBouton } from "@/components/app/nouvelle-version-bouton";
+import { EditeurScript } from "@/components/app/editeur-script";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateHeureFr } from "@/lib/format";
@@ -63,6 +64,18 @@ export default async function PageEnquete({ params }: { params: Promise<{ id: st
           </p>
         </div>
       )}
+
+      {/* Script d'introduction — UNITED Research */}
+      <div className="mb-6">
+        <EditeurScript
+          enqueteId={enquete.id}
+          scriptInitial={enquete.openingScript}
+          candidatInitial={enquete.candidateName}
+          instructionsInitiales={enquete.campaignInstructions}
+          conformiteInitiale={enquete.complianceMessage}
+          contactInitial={enquete.contactInfo}
+        />
+      </div>
 
       <Card className="mb-6">
         <CardHeader className="pb-3">

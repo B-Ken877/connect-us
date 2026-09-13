@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { versMessageUtilisateur, AppError, type CodeErreur } from "@/lib/errors";
 import { exigerRole } from "@/lib/auth/session";
-import { creerEnquete, creerNouvelleVersion, publierVersion, archiverVersion, majEnquete, creerQuestion, majQuestion, supprimerQuestion, dupliquerQuestion, reordonnerQuestions, majConfigVersion, type DonneesQuestion } from "@/server/services/survey-service";
+import { creerEnquete, creerNouvelleVersion, publierVersion, archiverVersion, majEnquete, creerQuestion, majQuestion, supprimerQuestion, dupliquerQuestion, reordonnerQuestions, majConfigVersion, majScriptEnquete, type DonneesQuestion } from "@/server/services/survey-service";
 import { schemaEnquete, schemaQuestion } from "@/lib/validation/schemas";
 import type { RoleUtilisateur } from "@/lib/auth/permissions";
 
@@ -178,6 +178,38 @@ export async function actionMajConfigVersion(
     await majConfigVersion({ utilisateurId: utilisateur.id, versionId, config });
     revalidatePath("/enquetes");
     return { succes: true };
+  } catch (e) {
+    return erreur(e);
+  }
+}
+
+// ------------------- UNITED Research — script d'introduction -------------------
+
+export async function actionMajScript(params: {
+  enqueteId: string;
+  openingScript: string;
+  candidateName?: string;
+  campaignInstructions?: string;
+  complianceMessage?: string;
+  contactInfo?: string;
+}): Promise<ResultatAction> {
+  try {
+    const utilisateur = await exigerRole(ROLES_GESTION);
+    if (!params.openingScript || params.openingScript.trim().length < 10) {
+      throw new AppError("VALIDATION", "Le script d'introduction doit contenir au moins 10 caractères.");
+    }
+    await majScriptEnquete({
+      utilisateurId: utilisateur.id,
+      surveyId: params.enqueteId,
+      openingScript: params.openingScript,
+      candidateName: params.candidateName,
+      campaignInstructions: params.campaignInstructions,
+      complianceMessage: params.complianceMessage,
+      contactInfo: params.contactInfo,
+    });
+    revalidatePath(`/enquetes/${params.enqueteId}`);
+    revalidatePath("/session");
+    return { succes: true, message: "Script d'introduction enregistré." };
   } catch (e) {
     return erreur(e);
   }

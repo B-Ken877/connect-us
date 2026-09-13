@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { AppError, versMessageUtilisateur } from "@/lib/errors";
 import { creerSession, detruireSession, lireSession } from "@/lib/auth/session";
-import { verifierMotDePasse } from "@/lib/auth/password";
+import { verifierMotDePasse, hasherMotDePasse, motDePasseValide } from "@/lib/auth/password";
 import { schemaConnexion } from "@/lib/validation/schemas";
 import { verifierLimite } from "@/lib/rate-limit";
 import { enregistrerAudit, ACTIONS_AUDIT } from "@/lib/audit";
@@ -63,6 +63,12 @@ export async function seConnecter(
       return { succes: false, message: "Identifiant ou mot de passe incorrect." };
     }
 
+    // Mise à jour de la dernière connexion (pour le tableau de bord admin).
+    await db.user.update({
+      where: { id: utilisateur.id },
+      data: { lastLoginAt: new Date() },
+    }).catch(() => { /* best-effort — login must succeed even if this fails */ });
+
     await creerSession(utilisateur);
     await enregistrerAudit({
       userId: utilisateur.id,
@@ -77,7 +83,82 @@ export async function seConnecter(
   }
 
   const session = await lireSession();
+  // Si l'utilisateur doit changer son mot de passe (compte créé en masse ou
+  // reset admin), on le redirige vers l'écran de changement obligatoire.
+  const utilisateurFinal = await db.user.findUnique({
+    where: { id: session!.sub },
+    select: { mustChangePassword: true },
+  });
+  if (utilisateurFinal?.mustChangePassword) {
+    redirect("/changer-mot-de-passe");
+  }
   redirect(ACCUEIL_PAR_ROLE[session!.role as RoleUtilisateur]);
+}
+
+/**
+ * Changement de mot de passe obligatoire (première connexion ou reset admin).
+ * L'utilisateur doit saisir son mot de passe actuel + le nouveau deux fois.
+ * Le flag mustChangePassword est effacé après succès.
+ */
+export async function changerMonMotDePasse(
+  _etatPrecedent: ResultatAction | null,
+  formData: FormData,
+): Promise<ResultatAction> {
+  const session = await lireSession();
+  if (!session) {
+    return { succes: false, message: "Votre session a expiré. Veuillez vous reconnecter." };
+  }
+
+  const motDePasseActuel = String(formData.get("motDePasseActuel") ?? "");
+  const nouveauMotDePasse = String(formData.get("nouveauMotDePasse") ?? "");
+  const confirmation = String(formData.get("confirmation") ?? "");
+
+  if (nouveauMotDePasse !== confirmation) {
+    return { succes: false, message: "Le nouveau mot de passe et sa confirmation ne correspondent pas." };
+  }
+
+  const validation = motDePasseValide(nouveauMotDePasse);
+  if (!validation.ok) {
+    return { succes: false, message: validation.message };
+  }
+
+  try {
+    const utilisateur = await db.user.findUnique({ where: { id: session.sub } });
+    if (!utilisateur || !utilisateur.active) {
+      return { succes: false, message: "Compte introuvable ou désactivé." };
+    }
+
+    // Vérifier l'ancien mot de passe (sauf si mustChangePassword=true, auquel
+    // cas l'ancien est le mot de passe temporaire — on vérifie quand même).
+    const ancienOk = await verifierMotDePasse(motDePasseActuel, utilisateur.passwordHash);
+    if (!ancienOk) {
+      return { succes: false, message: "Le mot de passe actuel est incorrect." };
+    }
+
+    const nouveauHash = await hasherMotDePasse(nouveauMotDePasse);
+    await db.user.update({
+      where: { id: utilisateur.id },
+      data: {
+        passwordHash: nouveauHash,
+        mustChangePassword: false,
+      },
+    });
+
+    await enregistrerAudit({
+      userId: utilisateur.id,
+      action: ACTIONS_AUDIT.MOT_DE_PASSE_CHANGE,
+      entityType: "User",
+      entityId: utilisateur.id,
+    });
+
+    return {
+      succes: true,
+      message: "Votre mot de passe a été modifié avec succès.",
+    };
+  } catch (erreur) {
+    console.error("[auth] Erreur changement mot de passe:", erreur);
+    return { succes: false, message: versMessageUtilisateur(erreur) };
+  }
 }
 
 function minutesRestantes(ms: number): number {

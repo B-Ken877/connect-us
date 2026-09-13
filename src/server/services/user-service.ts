@@ -18,6 +18,7 @@ export async function listerUtilisateurs() {
       active: true,
       createdAt: true,
       updatedAt: true,
+      lastLoginAt: true,
     },
   });
 }

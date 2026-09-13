@@ -50,6 +50,12 @@ export function estRoutePublique(chemin: string): boolean {
   );
 }
 
+/** Routes accessibles à tout utilisateur authentifié (quel que soit le rôle),
+ *  même si son mot de passe doit être changé. */
+export function estRouteObligatoire(chemin: string): boolean {
+  return chemin === "/changer-mot-de-passe";
+}
+
 /** Which roles may access this path? (longest-prefix match) */
 export function rolesPourChemin(chemin: string): RoleUtilisateur[] | null {
   let meilleur: RegleAcces | null = null;
