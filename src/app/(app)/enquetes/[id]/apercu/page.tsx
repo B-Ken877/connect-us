@@ -6,7 +6,7 @@ import { InterviewRunner } from "@/components/app/interview-runner";
 import type { QuestionDef } from "@/lib/survey-engine";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Aperçu de l'enquête — GIG Survey" };
+export const metadata = { title: "Aperçu de l'enquête — UNITED Research" };
 
 /**
  * Survey preview — executes the REAL engine (ordering, required, validation,

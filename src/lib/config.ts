@@ -10,10 +10,17 @@ function num(value: string | undefined, fallback: number): number {
 
 export const config = {
   auth: {
-    cookieName: "gig_session",
-    /** Session lifetime in hours. */
+    // Nom du cookie de session. Changé (gig_session -> united_session) lors du
+    // rebrand UNITED Research : décision de sécurité documentée — tous les
+    // cookies de session existants deviennent invalides, ce qui force une
+    // reconnexion de tous les utilisateurs. Aucune donnée serveur n'est perdue.
+    cookieName: "united_session",
+    /** Durée de vie de la session en heures. */
     heures: 12,
-    secret: process.env.AUTH_SECRET ?? "gig-survey-dev-secret-do-not-use-in-production",
+    // Secret de développement (UNIQUEMENT si AUTH_SECRET n'est pas défini).
+    // En production, estProduction() lève une erreur si AUTH_SECRET est absent
+    // (voir lib/auth/password.ts -> secretSession).
+    secret: process.env.AUTH_SECRET ?? "united-research-dev-secret-do-not-use-in-production",
   },
   dialer: {
     provider: process.env.DIALER_PROVIDER ?? "native",

@@ -9,7 +9,7 @@ import { formatDateHeureFr } from "@/lib/format";
 import { LIBELLES_ROLE, type RoleUtilisateur } from "@/lib/auth/permissions";
 import { Database, PhoneCall, ShieldCheck } from "lucide-react";
 
-export const metadata = { title: "Paramètres — GIG Survey" };
+export const metadata = { title: "Paramètres — UNITED Research" };
 export const dynamic = "force-dynamic";
 
 export default async function PageParametres() {

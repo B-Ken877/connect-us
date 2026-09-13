@@ -89,7 +89,7 @@ export function InterviewRunner({ mode, interviewId, questionnaire, afficherTitr
   }, [cleChoisie, visibles, questions, reponses]);
 
   // localStorage mirror (UX resilience only — server is authoritative).
-  const cleLocale = interviewId ? `gig:entretien:${interviewId}` : null;
+  const cleLocale = interviewId ? `united:entretien:${interviewId}` : null;
   const [hydratationFaite, setHydratationFaite] = useState(false);
   useEffect(() => {
     if (!cleLocale || mode !== "entretien" || hydratationFaite) return;
@@ -223,7 +223,7 @@ export function InterviewRunner({ mode, interviewId, questionnaire, afficherTitr
     setSoumission(false);
     if (r.succes && r.data) {
       try {
-        localStorage.removeItem(`gig:entretien:${interviewId}`);
+        localStorage.removeItem(`united:entretien:${interviewId}`);
       } catch {
         /* ignore */
       }
@@ -239,7 +239,7 @@ export function InterviewRunner({ mode, interviewId, questionnaire, afficherTitr
     const r = await actionAbandonnerEntretien(interviewId);
     if (r.succes) {
       try {
-        localStorage.removeItem(`gig:entretien:${interviewId}`);
+        localStorage.removeItem(`united:entretien:${interviewId}`);
       } catch {
         /* ignore */
       }

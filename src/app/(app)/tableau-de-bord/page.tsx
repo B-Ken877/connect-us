@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { formatDuree } from "@/lib/format";
 import { Plus, ClipboardList, Activity, ShieldCheck } from "lucide-react";
 
-export const metadata = { title: "Tableau de bord — GIG Survey" };
+export const metadata = { title: "Tableau de bord — UNITED Research" };
 export const dynamic = "force-dynamic";
 
 export default async function PageTableauDeBord() {

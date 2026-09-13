@@ -1,6 +1,6 @@
-# GIG Survey
+# UNITED Research
 
-Plateforme professionnelle **CATI** (*Computer-Assisted Telephone Interviewing*) pour centre d'enquêtes d'opinion. Interface intégralement en français. Infrastructure neutre : aucun contenu politique n'est codé en dur, le gestionnaire construit librement ses questionnaires.
+Plateforme professionnelle **d'appels téléphoniques et de recherche** pour centre d'appels. Interface intégralement en français. Infrastructure neutre : aucun contenu politique n'est codé en dur, le gestionnaire construit librement ses campagnes et ses scripts.
 
 **Les quatre piliers V1 :**
 
@@ -43,10 +43,8 @@ L'application tourne sur <http://localhost:3000>.
 
 | Rôle | Identifiant | Mot de passe |
 |---|---|---|
-| Administrateur | `admin@gig-survey.fr` | `Démo2026!` |
-| Gestionnaire | `gestionnaire@gig-survey.fr` | `Démo2026!` |
-| Superviseur | `superviseur@gig-survey.fr` | `Démo2026!` |
-| Agents | `agent1@gig-survey.fr` … `agent3@gig-survey.fr` | `Démo2026!` |
+| Administrateur | `admin@united-research.ht` | `Démo2026!` |
+| Agents | `agent1@united-research.ht` … `agent3@united-research.ht` | `Démo2026!` |
 
 > Les données de démonstration (répondants, enquête « Enquête politique — Démonstration », entretiens, signalements) sont **entièrement fictives**. N'utilisez jamais de données personnelles réelles en développement.
 
@@ -175,13 +173,13 @@ interface DialerProvider {
 
 Le bouton « Appeler » transmet le numéro au gestionnaire `tel:` du système — sur le poste de l'agent, c'est **Microsoft Phone Link** :
 
-1. L'agent travaille sur un **PC Windows**, GIG Survey ouvert dans le navigateur.
+1. L'agent travaille sur un **PC Windows**, UNITED Research ouvert dans le navigateur.
 2. **Microsoft Phone Link** (préinstallé sur Windows 10/11) est configuré.
 3. Le **téléphone Android** de l'agent contient la **SIM** (réseau cellulaire de l'opérateur).
 4. Le téléphone est **appairé** avec Windows via « Gestionnaire de téléphone mobile » / *Link to Windows*.
 5. Windows associe le protocole **`tel:`** à Phone Link (Paramètres → Applications → Applications par défaut).
-6. Dans GIG Survey, « Appeler » transmet **`tel:+509XXXXXXXX`** (numéro du répondant affiché dans l'entête, normalisé E.164). La page ne change jamais : le questionnaire reste ouvert, l'agent revient à la fenêtre et saisit les réponses.
-7. **L'appel cellulaire réel est passé par le téléphone et son opérateur.** GIG Survey n'a pas d'état d'appel autoritaire : il affiche « Composition lancée » (jamais « Appel en cours ») et un chronomètre d'interface explicitement libellé comme tel.
+6. Dans UNITED Research, « Appeler » transmet **`tel:+509XXXXXXXX`** (numéro du répondant affiché dans l'entête, normalisé E.164). La page ne change jamais : le questionnaire reste ouvert, l'agent revient à la fenêtre et saisit les réponses.
+7. **L'appel cellulaire réel est passé par le téléphone et son opérateur.** UNITED Research n'a pas d'état d'appel autoritaire : il affiche « Composition lancée » (jamais « Appel en cours ») et un chronomètre d'interface explicitement libellé comme tel.
 8. L'issue réelle (réponse, refus, rappel…) est enregistrée par l'agent à la disposition, comme avant.
 
 Si Phone Link n'est pas installé, non appairé, ou si un autre gestionnaire `tel:` est configuré, le système ouvre ce gestionnaire à la place ; l'application reste utilisable dans tous les cas (numéro affiché et copiable, message explicite si la composition échoue). Vérification rapide du poste : cliquer « Appeler » doit afficher l'URI exacte (`tel:+509…`) sous le bouton et ouvrir Phone Link avec le numéro prérempli.

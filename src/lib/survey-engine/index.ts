@@ -1,5 +1,5 @@
 /**
- * GIG Survey Engine — public surface.
+ * UNITED Research Engine — public surface.
  * Pure domain logic shared by builder, preview, agent runtime and server
  * services. Import from here only.
  */

@@ -7,7 +7,7 @@ import { obtenirDialerMeta } from "@/lib/dialer/registry";
 import { EspaceEntretien } from "@/components/app/espace-entretien";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Entretien en cours — GIG Survey" };
+export const metadata = { title: "Entretien en cours — UNITED Research" };
 
 /**
  * INTERVIEW WORKSPACE PAGE — strict server-side authorization:

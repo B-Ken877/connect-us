@@ -5,7 +5,7 @@ import { obtenirEntretienActif } from "@/server/services/interview-service";
 import { db } from "@/lib/db";
 import { obtenirDialerMeta } from "@/lib/dialer/registry";
 
-export const metadata = { title: "Session d'appels — GIG Survey" };
+export const metadata = { title: "Session d'appels — UNITED Research" };
 export const dynamic = "force-dynamic";
 
 /** Agent workspace — intentionally minimal: receive, call, interview, next. */

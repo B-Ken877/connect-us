@@ -3,7 +3,7 @@ import { statistiquesSupervision } from "@/server/services/stats-service";
 import { ConsoleSupervision } from "@/components/app/console-supervision";
 import { EnTetePage } from "@/components/app/primitives";
 
-export const metadata = { title: "Tableau de supervision — GIG Survey" };
+export const metadata = { title: "Tableau de supervision — UNITED Research" };
 export const dynamic = "force-dynamic";
 
 export default async function PageSupervision() {

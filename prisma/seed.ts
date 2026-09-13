@@ -1,5 +1,5 @@
 /**
- * GIG SURVEY — development seed.
+ * UNITED RESEARCH — development seed.
  * All content (names, numbers, political options) is FICTIONAL demo data.
  * Run: bun run seed
  */
@@ -41,10 +41,10 @@ async function principal() {
   console.log("→ Utilisateurs…");
   const hash = await bcrypt.hash(MOT_DE_PASSE, 10);
   const [admin, agent1, agent2, agent3] = await Promise.all([
-    db.user.create({ data: { name: "Sophie Marchand", email: "admin@gig-survey.fr", role: "ADMINISTRATEUR", passwordHash: hash } }),
-    db.user.create({ data: { name: "Camille Fournier", email: "agent1@gig-survey.fr", role: "AGENT", passwordHash: hash } }),
-    db.user.create({ data: { name: "Hugo Bertrand", email: "agent2@gig-survey.fr", role: "AGENT", passwordHash: hash } }),
-    db.user.create({ data: { name: "Inès Roussel", email: "agent3@gig-survey.fr", role: "AGENT", passwordHash: hash } }),
+    db.user.create({ data: { name: "Sophie Marchand", email: "admin@united-research.ht", role: "ADMINISTRATEUR", passwordHash: hash } }),
+    db.user.create({ data: { name: "Camille Fournier", email: "agent1@united-research.ht", role: "AGENT", passwordHash: hash } }),
+    db.user.create({ data: { name: "Hugo Bertrand", email: "agent2@united-research.ht", role: "AGENT", passwordHash: hash } }),
+    db.user.create({ data: { name: "Inès Roussel", email: "agent3@united-research.ht", role: "AGENT", passwordHash: hash } }),
   ]);
 
   console.log("→ Répondants (fictifs)…");
@@ -407,10 +407,10 @@ async function principal() {
 
   console.log("\n✓ Seed terminé.");
   console.log("\n   Comptes de démonstration (mot de passe : Démo2026!) :");
-  console.log("   - admin@gig-survey.fr         (Administrateur)");
-  console.log("   - agent1@gig-survey.fr        (Agent — Camille)");
-  console.log("   - agent2@gig-survey.fr        (Agent — Hugo)");
-  console.log("   - agent3@gig-survey.fr        (Agent — Inès)");
+  console.log("   - admin@united-research.ht         (Administrateur)");
+  console.log("   - agent1@united-research.ht        (Agent — Camille)");
+  console.log("   - agent2@united-research.ht        (Agent — Hugo)");
+  console.log("   - agent3@united-research.ht        (Agent — Inès)");
   void qParCle;
 }
 

@@ -5,7 +5,7 @@ import { EditeurQuestions } from "@/components/app/editeur-questions";
 import type { QuestionDef } from "@/lib/survey-engine";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Édition de l'enquête — GIG Survey" };
+export const metadata = { title: "Édition de l'enquête — UNITED Research" };
 
 export default async function PageEditionEnquete({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

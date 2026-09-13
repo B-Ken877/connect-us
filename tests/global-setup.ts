@@ -4,8 +4,8 @@
  * applies the integrity guards. The data directory is persistent: subsequent
  * runs start instantly and tests truncate their tables.
  *
- * The database used here is EXCLUSIVELY a test database (port 5434, database
- * gig_survey_test) — never the development or production one.
+ * The database used here is EXCLUSIVELY a test database (port 5434) — never
+ * the development or production one.
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -63,7 +63,7 @@ export default async function globalSetup() {
     demarreIci = { stop: () => pg.stop() };
   }
 
-  process.env.GIG_TEST_DATABASE_URL = URL_TEST;
+  process.env.UNITED_TEST_DATABASE_URL = URL_TEST;
 
   const env = { ...process.env, DATABASE_URL: URL_TEST };
   let res = spawnSync("bunx", ["prisma", "db", "push", "--skip-generate", "--accept-data-loss"], {

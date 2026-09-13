@@ -2,7 +2,7 @@ import { exigerAcces } from "@/lib/auth/session";
 import { EnTetePage } from "@/components/app/primitives";
 import { FormulaireEnquete } from "@/components/app/formulaire-enquete";
 
-export const metadata = { title: "Nouvelle enquête — GIG Survey" };
+export const metadata = { title: "Nouvelle enquête — UNITED Research" };
 
 export default async function PageNouvelleEnquete() {
   await exigerAcces(["ADMINISTRATEUR"]);

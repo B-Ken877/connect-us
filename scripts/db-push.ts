@@ -1,5 +1,5 @@
 /**
- * GIG Survey — database bootstrap helper for development.
+ * UNITED Research — database bootstrap helper for development.
  *
  * The sandbox shell exports a legacy DATABASE_URL (SQLite) that would override
  * the project .env for Prisma CLI commands. This wrapper:

@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDateHeureFr, formatDuree, LIBELLES_TYPE_SIGNALEMENT } from "@/lib/format";
 
-export const metadata = { title: "Contrôle qualité — GIG Survey" };
+export const metadata = { title: "Contrôle qualité — UNITED Research" };
 export const dynamic = "force-dynamic";
 
 const STATUTS = ["A_EXAMINER", "VALIDE", "REJETE", "FAUX_POSITIF", "TOUS"];

@@ -9,7 +9,7 @@ import { construireUriTel } from "@/lib/dialer/numero";
  *   the standard `tel:` protocol (Windows Phone Link, or any other handler
  *   configured on the workstation; on mobile, the native dialer). The anchor-
  *   click mechanism is the browser-sanctioned user-gesture path: the current
- *   GIG Survey page NEVER navigates away, no timers, no hidden iframes.
+ *   UNITED Research page NEVER navigates away, no timers, no hidden iframes.
  *   The platform never fabricates call state: INITIE strictly means
  *   "the OS telephone handler was requested" — CALL_REQUESTED only.
  * - serveur mode → reserved for a future telephony provider: the client asks

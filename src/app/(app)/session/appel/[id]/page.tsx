@@ -6,7 +6,7 @@ import { obtenirDialerMeta } from "@/lib/dialer/registry";
 import { EcranAppel } from "@/components/app/ecran-appel";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Appel en cours — GIG Survey" };
+export const metadata = { title: "Appel en cours — UNITED Research" };
 
 /**
  * LEGACY CALL SCREEN — compatibility layer.

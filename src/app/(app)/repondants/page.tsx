@@ -6,7 +6,7 @@ import { FormulaireRepondant } from "@/components/app/formulaire-repondant";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Link from "next/link";
 
-export const metadata = { title: "Répondants — GIG Survey" };
+export const metadata = { title: "Répondants — UNITED Research" };
 export const dynamic = "force-dynamic";
 
 export default async function PageRepondants({

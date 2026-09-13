@@ -14,11 +14,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GIG Survey — Plateforme d'enquêtes téléphoniques",
+  title: "UNITED Research — Plateforme d'appels et de recherche",
   description:
-    "Plateforme professionnelle CATI d'enquêtes d'opinion : construction d'enquêtes, conduite d'entretiens téléphoniques, supervision et contrôle qualité.",
+    "Plateforme professionnelle d'appels téléphoniques et de recherche : conduite de campagnes, fiches d'appel, supervision et suivi qualité.",
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/united-research-logo-favicon.png",
   },
 };
 

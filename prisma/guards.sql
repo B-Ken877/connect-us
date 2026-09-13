@@ -1,5 +1,5 @@
 -- ============================================================================
--- GIG SURVEY — PostgreSQL integrity guards
+-- UNITED RESEARCH — PostgreSQL integrity guards
 -- Applied AFTER `prisma db push`:
 --   bunx prisma db execute --file prisma/guards.sql --schema prisma/schema.prisma
 --

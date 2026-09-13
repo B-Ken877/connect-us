@@ -1,5 +1,5 @@
 /**
- * GIG Survey — Local development database bootstrap.
+ * UNITED Research — Local development database bootstrap.
  *
  * Runs a REAL embedded PostgreSQL 18 binary (via embedded-postgres) so that
  * the local development environment matches production exactly (Vercel +

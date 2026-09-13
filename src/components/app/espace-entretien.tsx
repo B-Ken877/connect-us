@@ -102,7 +102,7 @@ export function EspaceEntretien({
   // an interface chronometer, never as a verified cellular state.
   useEffect(() => {
     try {
-      const brut = sessionStorage.getItem(`gig:appel:${interviewId}`);
+      const brut = sessionStorage.getItem(`united:appel:${interviewId}`);
       if (brut) {
         const t = Number(brut);
         if (Number.isFinite(t) && t > 0) {
@@ -148,8 +148,8 @@ export function EspaceEntretien({
 
   function nettoyerStockageLocal() {
     try {
-      localStorage.removeItem(`gig:entretien:${interviewId}`);
-      sessionStorage.removeItem(`gig:appel:${interviewId}`);
+      localStorage.removeItem(`united:entretien:${interviewId}`);
+      sessionStorage.removeItem(`united:appel:${interviewId}`);
     } catch {
       /* ignore */
     }
@@ -175,7 +175,7 @@ export function EspaceEntretien({
           "Composition lancée. Si rien ne se passe, composez le numéro affiché.",
       );
       try {
-        sessionStorage.setItem(`gig:appel:${interviewId}`, String(t));
+        sessionStorage.setItem(`united:appel:${interviewId}`, String(t));
       } catch {
         /* ignore */
       }

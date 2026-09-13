@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import Link from "next/link";
 import { formatDateHeureFr, formatDuree } from "@/lib/format";
 
-export const metadata = { title: "Entretiens — GIG Survey" };
+export const metadata = { title: "Entretiens — UNITED Research" };
 export const dynamic = "force-dynamic";
 
 /**

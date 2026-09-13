@@ -21,6 +21,9 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -44,72 +47,80 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --radius: 0.5rem;
+  /* ---- UNITED Research — palette institutionnelle navy + or ---- */
+  --background: oklch(0.99 0 0);                       /* blanc cassé #FDFDFD */
+  --foreground: oklch(0.18 0.02 260);                  /* gris très foncé teinté navy #1B1F2A */
+  --card: oklch(1 0 0);                                /* blanc #FFFFFF */
+  --card-foreground: oklch(0.18 0.02 260);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.51 0.086 194.77);           /* teal institutionnel (teal-700) */
+  --popover-foreground: oklch(0.18 0.02 260);
+  --primary: oklch(0.27 0.06 260);                     /* bleu marine profond #0B2545 */
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.51 0.086 194.77);
-  --chart-1: oklch(0.51 0.086 194.77);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.51 0.086 194.77);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --secondary: oklch(0.96 0.01 250);                   /* gris ardoise clair #F0F2F5 */
+  --secondary-foreground: oklch(0.25 0.02 260);        /* navy foncé pour texte sur secondary */
+  --muted: oklch(0.96 0.005 250);                      /* surface discrète #F4F5F7 */
+  --muted-foreground: oklch(0.50 0.015 260);           /* gris ardoise #64748B */
+  --accent: oklch(0.71 0.13 75);                       /* or discret #C9A24B */
+  --accent-foreground: oklch(0.18 0 0);
+  --destructive: oklch(0.55 0.20 25);                  /* rouge profond #B91C1C */
+  --success: oklch(0.55 0.13 150);                     /* vert #1E8E4A */
+  --warning: oklch(0.65 0.16 65);                      /* orange #C77A0A */
+  --info: oklch(0.55 0.10 230);                        /* bleu informatif #1E5FAE */
+  --border: oklch(0.91 0.01 250);                      /* bordure discrète #E5E7EB */
+  --input: oklch(0.91 0.01 250);
+  --ring: oklch(0.27 0.06 260);                        /* focus ring = primary */
+  --chart-1: oklch(0.27 0.06 260);                     /* navy */
+  --chart-2: oklch(0.71 0.13 75);                      /* or */
+  --chart-3: oklch(0.55 0.13 150);                     /* vert */
+  --chart-4: oklch(0.55 0.10 230);                     /* bleu info */
+  --chart-5: oklch(0.55 0.20 25);                      /* rouge */
+  /* Sidebar navy — Option A */
+  --sidebar: oklch(0.27 0.06 260);                     /* même bleu marine que primary */
+  --sidebar-foreground: oklch(0.92 0.01 250);          /* texte clair gris-bleu */
+  --sidebar-primary: oklch(0.71 0.13 75);              /* accent or pour l'élément actif */
+  --sidebar-primary-foreground: oklch(0.18 0 0);       /* texte foncé sur or */
+  --sidebar-accent: oklch(0.32 0.05 260);              /* navy légèrement plus clair au survol */
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.35 0.04 260);              /* bordure navy plus claire */
+  --sidebar-ring: oklch(0.71 0.13 75);                 /* ring or */
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+  --background: oklch(0.16 0.02 260);
+  --foreground: oklch(0.96 0.005 250);
+  --card: oklch(0.21 0.025 260);
+  --card-foreground: oklch(0.96 0.005 250);
+  --popover: oklch(0.21 0.025 260);
+  --popover-foreground: oklch(0.96 0.005 250);
+  --primary: oklch(0.71 0.13 75);                      /* or comme primary en dark (lisibilité) */
+  --primary-foreground: oklch(0.18 0 0);
+  --secondary: oklch(0.27 0.04 260);
+  --secondary-foreground: oklch(0.96 0.005 250);
+  --muted: oklch(0.27 0.04 260);
+  --muted-foreground: oklch(0.70 0.02 250);
+  --accent: oklch(0.71 0.13 75);
+  --accent-foreground: oklch(0.18 0 0);
+  --destructive: oklch(0.65 0.18 25);
+  --success: oklch(0.62 0.13 150);
+  --warning: oklch(0.70 0.16 65);
+  --info: oklch(0.62 0.10 230);
+  --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.71 0.13 75);
+  --chart-1: oklch(0.71 0.13 75);
+  --chart-2: oklch(0.62 0.13 150);
+  --chart-3: oklch(0.62 0.10 230);
+  --chart-4: oklch(0.65 0.18 25);
+  --chart-5: oklch(0.62 0.18 280);
+  --sidebar: oklch(0.13 0.02 260);
+  --sidebar-foreground: oklch(0.92 0.01 250);
+  --sidebar-primary: oklch(0.71 0.13 75);
+  --sidebar-primary-foreground: oklch(0.18 0 0);
+  --sidebar-accent: oklch(0.21 0.025 260);
+  --sidebar-accent-foreground: oklch(0.96 0.005 250);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: oklch(0.71 0.13 75);
 }
 
 @layer base {
@@ -121,7 +132,7 @@
   }
 }
 
-/* ---- GIG Survey — style institutionnel ---- */
+/* ---- UNITED Research — style institutionnel ---- */
 .libelle-section {
   font-size: 0.6875rem;
   letter-spacing: 0.08em;

@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatDateHeureFr } from "@/lib/format";
 import { LIBELLES_ROLE, type RoleUtilisateur } from "@/lib/auth/permissions";
 
-export const metadata = { title: "Agents & comptes — GIG Survey" };
+export const metadata = { title: "Agents & comptes — UNITED Research" };
 export const dynamic = "force-dynamic";
 
 export default async function PageAgents() {

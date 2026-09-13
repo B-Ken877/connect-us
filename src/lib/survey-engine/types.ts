@@ -1,5 +1,5 @@
 /**
- * GIG SURVEY ENGINE — shared domain types.
+ * UNITED RESEARCH ENGINE — shared domain types.
  *
  * This module is intentionally pure (no Prisma, no React, no next/headers):
  * it is used identically by the survey builder (client), the agent interview

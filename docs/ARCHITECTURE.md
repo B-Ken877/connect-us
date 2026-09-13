@@ -1,4 +1,4 @@
-# GIG Survey — Architecture
+# UNITED Research — Architecture
 
 Document de décision d'architecture. Chaque choix vise l'équilibre demandé :
 **simple + modulaire + fiable**, prêt pour la téléphonie réelle et le scale,

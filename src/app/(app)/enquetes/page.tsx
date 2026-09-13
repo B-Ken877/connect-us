@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { formatDateHeureFr } from "@/lib/format";
 import { Plus, ChevronRight } from "lucide-react";
 
-export const metadata = { title: "Enquêtes — GIG Survey" };
+export const metadata = { title: "Enquêtes — UNITED Research" };
 export const dynamic = "force-dynamic";
 
 export default async function PageEnquetes() {
