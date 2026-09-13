@@ -50,8 +50,9 @@ function statutRepondantPour(statut: DonneesResultatAppel["statut"]) {
       return "RAPPEL_PLANIFIE" as const;
     case "REFUS":
     case "NUMERO_INCORRECT":
+    case "NE_PAS_RAPPELER": // UNITED Research: opt-out → exclusion définitive
       return "EXCLU" as const;
-    default: // SANS_REPONSE / OCCUPE / ABANDONNE
+    default: // SANS_REPONSE / OCCUPE / ABANDONNE / MESSAGERIE / AUTRE
       return "DISPONIBLE" as const;
   }
 }
@@ -95,6 +96,17 @@ export async function appliquerResultatAppel(
       lockExpiresAt: statutRepondant === "EN_COURS" ? echeanceVerrou : null,
     },
   });
+
+  // UNITED Research: journaliser l'opt-out (NE_PAS_RAPPELER) pour traçabilité.
+  if (donnees.statut === "NE_PAS_RAPPELER") {
+    await enregistrerAudit({
+      userId: appel.agentId,
+      action: "CONTACT_OPT_OUT",
+      entityType: "Respondent",
+      entityId: appel.respondentId,
+      metadata: { appelId: appel.id },
+    });
+  }
 
   if (statutRepondant !== "EN_COURS") {
     await marquerEtatActivite(appel.agentId, "DISPONIBLE");

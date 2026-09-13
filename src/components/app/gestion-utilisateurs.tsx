@@ -22,10 +22,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Plus, LoaderCircle, KeyRound } from "lucide-react";
+import { Plus, LoaderCircle, KeyRound, PencilLine } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { LIBELLES_ROLE, type RoleUtilisateur } from "@/lib/auth/permissions";
 import { actionCreerUtilisateur, actionMajUtilisateur } from "@/server/actions/admin-actions";
+
+// UNITED Research — le rôle d'un compte n'est JAMAIS modifiable après création.
+// Un agent reste agent, un administrateur reste administrateur. Seuls l'état
+// actif/inactif et le mot de passe peuvent être modifiés.
 
 interface UtilisateurLeger {
   id: string;
@@ -55,8 +59,7 @@ export function GestionUtilisateurs({
   const [role, setRole] = useState<RoleUtilisateur>("AGENT");
   const [motDePasse, setMotDePasse] = useState("");
 
-  // edit form
-  const [nouveauRole, setNouveauRole] = useState<RoleUtilisateur>("AGENT");
+  // edit form — le rôle n'est PAS modifiable (politique UNITED Research)
   const [actif, setActif] = useState(true);
   const [nouveauMotDePasse, setNouveauMotDePasse] = useState("");
 
@@ -81,7 +84,7 @@ export function GestionUtilisateurs({
     if (!cible) return;
     demarrer(async () => {
       const r = await actionMajUtilisateur(cible.id, {
-        role: nouveauRole,
+        // Le rôle n'est jamais modifié — on garde le rôle existant.
         active: actif,
         ...(nouveauMotDePasse ? { motDePasse: nouveauMotDePasse } : {}),
       });
@@ -155,27 +158,23 @@ export function GestionUtilisateurs({
           <DialogHeader>
             <DialogTitle>Modifier « {cible?.name} »</DialogTitle>
             <DialogDescription>
-              Les changements de rôle et de statut sont journalisés dans le registre d&apos;audit.
+              Les changements de statut et de mot de passe sont journalisés dans le registre d&apos;audit.
             </DialogDescription>
           </DialogHeader>
           {cible && (
             <div className="space-y-4">
               <div className="space-y-1.5">
                 <Label>Rôle</Label>
-                <Select value={nouveauRole} onValueChange={(v) => setNouveauRole(v as RoleUtilisateur)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(Object.keys(LIBELLES_ROLE) as RoleUtilisateur[]).map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {LIBELLES_ROLE[r]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-2">
+                  <span className="text-sm font-medium text-foreground">
+                    {LIBELLES_ROLE[cible.role]}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    — non modifiable (politique UNITED Research)
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3">
+              <div className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
                 <div>
                   <p className="text-sm font-medium">Compte actif</p>
                   <p className="text-xs text-muted-foreground">Un compte désactivé ne peut plus se connecter.</p>
@@ -211,26 +210,37 @@ export function GestionUtilisateurs({
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {utilisateurs.map((u) => (
-          <button
+          <div
             key={u.id}
-            type="button"
-            onClick={() => {
-              setCible(u);
-              setNouveauRole(u.role);
-              setActif(u.active);
-              setNouveauMotDePasse("");
-            }}
-            className="rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition-colors hover:border-primary/40"
+            className="rounded-lg border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/40"
           >
-            <div className="flex items-center justify-between gap-2">
-              <p className="font-medium text-slate-900">{u.name}</p>
-              {!u.active && (
-                <span className="rounded bg-red-50 px-1.5 py-0.5 text-xs font-medium text-red-700">Inactif</span>
-              )}
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-foreground">{u.name}</p>
+                  {!u.active && (
+                    <span className="rounded bg-red-50 px-1.5 py-0.5 text-xs font-medium text-red-700">Inactif</span>
+                  )}
+                </div>
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">{u.email}</p>
+                <p className="mt-2 text-xs font-medium text-primary">{LIBELLES_ROLE[u.role]}</p>
+              </div>
             </div>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">{u.email}</p>
-            <p className="mt-2 text-xs font-medium text-primary">{LIBELLES_ROLE[u.role]}</p>
-          </button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-3 w-full gap-1.5"
+              onClick={() => {
+                setCible(u);
+                setActif(u.active);
+                setNouveauMotDePasse("");
+              }}
+            >
+              <PencilLine className="h-3.5 w-3.5" />
+              Modifier le compte
+            </Button>
+          </div>
         ))}
       </div>
     </div>

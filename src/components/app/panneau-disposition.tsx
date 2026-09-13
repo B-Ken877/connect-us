@@ -23,9 +23,12 @@ import { cn } from "@/lib/utils";
 const SANS_ENTRETIEN: { statut: string; libelle: string; classe: string }[] = [
   { statut: "SANS_REPONSE", libelle: "Sans réponse", classe: "border-slate-300 bg-white hover:bg-slate-50" },
   { statut: "OCCUPE", libelle: "Occupé", classe: "border-slate-300 bg-white hover:bg-slate-50" },
-  { statut: "REFUS", libelle: "Refus", classe: "border-red-200 bg-red-50 text-red-800 hover:bg-red-100" },
-  { statut: "NUMERO_INCORRECT", libelle: "Numéro incorrect", classe: "border-orange-200 bg-orange-50 text-orange-800 hover:bg-orange-100" },
-  { statut: "RAPPEL", libelle: "Rappel", classe: "border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100" },
+  { statut: "MESSAGERIE", libelle: "Messagerie vocale", classe: "border-slate-300 bg-white hover:bg-slate-50" },
+  { statut: "REFUS", libelle: "Refusé", classe: "border-red-200 bg-red-50 text-red-800 hover:bg-red-100" },
+  { statut: "NUMERO_INCORRECT", libelle: "Mauvais numéro", classe: "border-orange-200 bg-orange-50 text-orange-800 hover:bg-orange-100" },
+  { statut: "RAPPEL", libelle: "Rappel demandé", classe: "border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100" },
+  { statut: "NE_PAS_RAPPELER", libelle: "Ne plus appeler", classe: "border-red-300 bg-red-100 text-red-900 hover:bg-red-200" },
+  { statut: "AUTRE", libelle: "Autre", classe: "border-slate-300 bg-white hover:bg-slate-50" },
 ];
 
 interface Props {

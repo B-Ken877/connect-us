@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BadgeAgent } from "@/components/app/badges";
-import { PhoneCall, Pause, Play, LoaderCircle, ShieldAlert, UserRound, FileText } from "lucide-react";
+import Link from "next/link";
+import { PhoneCall, Pause, Play, LoaderCircle, ShieldAlert, UserRound, FileText, History } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   actionDemarrerSession,
@@ -110,6 +111,11 @@ export function ConsoleAgent({ prenom, nomComplet, statsInitiales, entretienActi
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{prenom}</h1>
         </div>
         <div className="flex items-center gap-3">
+          <Button asChild variant="ghost" size="sm" className="gap-1.5">
+            <Link href="/session/historique">
+              <History className="h-4 w-4" /> Historique
+            </Link>
+          </Button>
           <BadgeAgent statut={stats.statutSession} />
           {!horsLigne && (
             <Button

@@ -190,13 +190,19 @@ export interface StatsGestionnaire {
   signalementsOuverts: number;
   dureeMoyenneSecondes: number | null;
   versionActive: { titre: string; versionNumber: number; enqueteId: string } | null;
+  // ---- UNITED Research — métriques supplémentaires ----
+  agentsTotal: number;
+  agentsActifs: number;
+  appelsAujourdhui: number;
+  optOuts: number;          // contacts marqués NE_PAS_RAPPELER (exclus définitivement)
+  campagneActive: { id: string; titre: string; candidat: string | null } | null;
 }
 
 export async function statistiquesGestionnaire(): Promise<StatsGestionnaire> {
   const debutJour = DEBUT_JOUR();
   const ilYA7Jours = new Date(debutJour.getTime() - 6 * 86_400_000);
 
-  const [enquetesTotal, enquetesPubliees, versionsPubliees, repondantsTotal, repondantsInterroges, entretiensTotal, entretiensAujourdHui, parJour, signalements, dureeMoyenne, versionActive] =
+  const [enquetesTotal, enquetesPubliees, versionsPubliees, repondantsTotal, repondantsInterroges, entretiensTotal, entretiensAujourdHui, parJour, signalements, dureeMoyenne, versionActive, agentsTotal, agentsActifs, appelsAujourdhui, optOuts, campagneActive] =
     await Promise.all([
       db.survey.count(),
       db.survey.count({ where: { status: "PUBLIEE" } }),
@@ -210,7 +216,6 @@ export async function statistiquesGestionnaire(): Promise<StatsGestionnaire> {
         where: { status: "TERMINE", completedAt: { gte: ilYA7Jours } },
         _count: true,
       }).then((lignes) => {
-        // group on completedAt timestamp → bucket per day
         const parJourMap = new Map<string, number>();
         for (const ligne of lignes) {
           if (!ligne.completedAt) continue;
@@ -233,6 +238,16 @@ export async function statistiquesGestionnaire(): Promise<StatsGestionnaire> {
         orderBy: { publishedAt: "desc" },
         include: { survey: { select: { title: true, id: true } } },
       }),
+      // ---- UNITED Research — métriques supplémentaires ----
+      db.user.count({ where: { role: "AGENT" } }),
+      db.user.count({ where: { role: "AGENT", active: true } }),
+      db.callAttempt.count({ where: { startedAt: { gte: debutJour } } }),
+      db.callAttempt.count({ where: { status: "NE_PAS_RAPPELER" } }),
+      db.survey.findFirst({
+        where: { status: "PUBLIEE" },
+        orderBy: { updatedAt: "desc" },
+        select: { id: true, title: true, candidateName: true },
+      }),
     ]);
 
   return {
@@ -249,6 +264,13 @@ export async function statistiquesGestionnaire(): Promise<StatsGestionnaire> {
     dureeMoyenneSecondes: dureeMoyenne._avg.durationSeconds ?? null,
     versionActive: versionActive
       ? { titre: versionActive.survey.title, versionNumber: versionActive.versionNumber, enqueteId: versionActive.survey.id }
+      : null,
+    agentsTotal,
+    agentsActifs,
+    appelsAujourdhui,
+    optOuts,
+    campagneActive: campagneActive
+      ? { id: campagneActive.id, titre: campagneActive.title, candidat: campagneActive.candidateName }
       : null,
   };
 }

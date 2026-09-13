@@ -29,7 +29,7 @@ export default async function PageAgents() {
     <div className="mx-auto max-w-6xl">
       <EnTetePage
         titre="Agents & comptes"
-        description="Gestion des comptes du centre : création, rôles, activation. Toute modification est journalisée."
+        description="Gestion des comptes : création, rôles, activation, réinitialisation. Toute modification est journalisée."
         actions={<CreationAgentsEnMasse />}
       />
 
@@ -37,7 +37,7 @@ export default async function PageAgents() {
 
       <div className="mt-6 overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <div className="border-b border-border bg-muted/50 px-4 py-3">
-          <p className="libelle-section">Comptes existants</p>
+          <p className="libelle-section">Tous les comptes</p>
         </div>
         <Table>
           <TableHeader>
@@ -84,6 +84,11 @@ export default async function PageAgents() {
           </TableBody>
         </Table>
       </div>
+
+      <p className="mt-4 text-xs text-muted-foreground">
+        Cliquez sur « Modifier le compte » pour activer/désactiver un compte ou réinitialiser son mot de passe.
+        Le rôle est défini à la création et n&apos;est pas modifiable.
+      </p>
     </div>
   );
 }
