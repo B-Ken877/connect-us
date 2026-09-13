@@ -54,5 +54,11 @@ async function sessionDepuisRequete(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|images|manifest.webmanifest).*)"],
+  // Excludes: Next internals, static files in /public (images, icons, manifests),
+  // and common static asset extensions at the root of /public.
+  // Without this, the proxy would intercept logo/favicon requests and redirect
+  // unauthenticated visitors to /connexion — breaking the login page branding.
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|images|manifest.webmanifest|robots.txt|.*\\.png|.*\\.svg|.*\\.jpg|.*\\.jpeg|.*\\.gif|.*\\.webp|.*\\.ico|.*\\.xml|.*\\.txt).*)",
+  ],
 };
