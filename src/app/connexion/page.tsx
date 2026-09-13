@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { Suspense } from "react";
 import { ConnexionForm } from "@/components/app/connexion-form";
 
@@ -9,12 +8,12 @@ export default function PageConnexion() {
     <main className="flex flex-1 items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
-          <Image
+          {/* logo statique — pas besoin d'optimisation next/image */}
+          <img
             src="/united-research-logo-trim.png"
             alt="UNITED Research"
             width={260}
             height={82}
-            priority
             className="h-auto w-[260px] max-w-full"
           />
           <p className="mt-4 text-sm text-muted-foreground">

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
@@ -95,13 +94,13 @@ export function AppShell({
             {menuOuvert ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
           <Link href="/" className="flex items-center" aria-label="UNITED Research — accueil">
-            <Image
+            {/* logo statique — pas besoin d'optimisation next/image */}
+            <img
               src="/united-research-logo-nav.png"
               alt="UNITED Research"
               width={120}
               height={32}
               className="h-8 w-auto"
-              priority
             />
           </Link>
           <div className="ml-auto flex items-center gap-3">
