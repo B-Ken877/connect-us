@@ -16,24 +16,28 @@ export default async function PageAgents() {
   const session = await exigerAcces(["ADMINISTRATEUR"]);
   const utilisateurs = await listerUtilisateurs();
 
-  const serialized = utilisateurs.map((u) => ({
-    id: u.id,
-    name: u.name,
-    email: u.email,
-    role: u.role as RoleUtilisateur,
-    active: u.active,
-    createdAt: u.createdAt.toISOString(),
-  }));
+  // Les comptes administrateurs ne sont PAS éditables depuis cette page.
+  // Seuls les comptes agents apparaissent dans les cartes éditables.
+  const agentsEditables = utilisateurs
+    .filter((u) => u.role === "AGENT")
+    .map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role as RoleUtilisateur,
+      active: u.active,
+      createdAt: u.createdAt.toISOString(),
+    }));
 
   return (
     <div className="mx-auto max-w-6xl">
       <EnTetePage
         titre="Agents & comptes"
-        description="Gestion des comptes : création, rôles, activation, réinitialisation. Toute modification est journalisée."
+        description="Gestion des comptes agents : création, activation, réinitialisation. Les comptes administrateurs ne sont pas éditables ici. Toute modification est journalisée."
         actions={<CreationAgentsEnMasse />}
       />
 
-      <GestionUtilisateurs utilisateurs={serialized} utilisateurCourantId={session.sub} />
+      <GestionUtilisateurs utilisateurs={agentsEditables} utilisateurCourantId={session.sub} />
 
       <div className="mt-6 overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <div className="border-b border-border bg-muted/50 px-4 py-3">
@@ -86,8 +90,8 @@ export default async function PageAgents() {
       </div>
 
       <p className="mt-4 text-xs text-muted-foreground">
-        Cliquez sur « Modifier le compte » pour activer/désactiver un compte ou réinitialiser son mot de passe.
-        Le rôle est défini à la création et n&apos;est pas modifiable.
+        Cliquez sur « Modifier le compte » pour activer/désactiver un agent ou réinitialiser son mot de passe.
+        Les comptes administrateurs sont listés ci-dessus pour information mais ne sont pas éditables depuis cette page.
       </p>
     </div>
   );
