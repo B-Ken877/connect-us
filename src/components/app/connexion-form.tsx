@@ -17,6 +17,7 @@ export function ConnexionForm() {
   const shiftTermine = parametres.get("shiftTermine") === "1";
   const shiftLibelle = parametres.get("shiftLibelle") ?? "";
   const prochainDebut = parametres.get("prochainDebut") ?? "";
+  const ipRefusee = parametres.get("ipRefusee") === "1";
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, demarrer] = useTransition();
 
@@ -54,10 +55,19 @@ export function ConnexionForm() {
             </AlertDescription>
           </Alert>
         )}
-        {expiree && !erreur && !shiftTermine && (
+        {expiree && !erreur && !shiftTermine && !ipRefusee && (
           <Alert className="mb-4 border-amber-200 bg-amber-50 text-amber-900">
             <ShieldAlert className="h-4 w-4" />
             <AlertDescription>Votre session a expiré. Veuillez vous reconnecter.</AlertDescription>
+          </Alert>
+        )}
+        {ipRefusee && !erreur && (
+          <Alert variant="destructive" className="mb-4">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Connexion interrompue.</strong> Cette adresse IP n&apos;est plus autorisée
+              pour votre compte. Contactez l&apos;administrateur.
+            </AlertDescription>
           </Alert>
         )}
         {erreur && (

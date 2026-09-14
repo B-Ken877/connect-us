@@ -144,6 +144,11 @@ model User {
   mustChangePassword  Boolean   @default(false)
   // Dernière connexion réussie — pour le tableau de bord admin.
   lastLoginAt         DateTime?
+  // ---- UNITED Research — restriction IP ----
+  // "ANY" = n'importe quelle IP (défaut), "SPECIFIC" = une seule IP autorisée.
+  ipRestrictionMode   String    @default("ANY")
+  // L'IP autorisée si mode = "SPECIFIC" (sinon null).
+  ipRestriction       String?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 

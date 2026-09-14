@@ -19,6 +19,8 @@ export async function listerUtilisateurs() {
       createdAt: true,
       updatedAt: true,
       lastLoginAt: true,
+      ipRestrictionMode: true,
+      ipRestriction: true,
     },
   });
 }
@@ -62,6 +64,8 @@ export async function majUtilisateur(params: {
   role?: Role;
   motDePasse?: string;
   active?: boolean;
+  ipRestrictionMode?: "ANY" | "SPECIFIC";
+  ipRestriction?: string | null;
 }) {
   const cible = await db.user.findUnique({ where: { id: params.utilisateurId } });
   if (!cible) throw new AppError("INTROUVABLE", "Compte introuvable.");
@@ -72,6 +76,27 @@ export async function majUtilisateur(params: {
     const verif = motDePasseValide(params.motDePasse);
     if (!verif.ok) throw new AppError("VALIDATION", verif.message);
     data.passwordHash = await hasherMotDePasse(params.motDePasse);
+  }
+
+  // ---- UNITED Research — restriction IP ----
+  if (params.ipRestrictionMode !== undefined) {
+    if (params.ipRestrictionMode === "SPECIFIC") {
+      if (!params.ipRestriction || !params.ipRestriction.trim()) {
+        throw new AppError("VALIDATION", "Une adresse IP est requise pour le mode 'IP spécifique'.");
+      }
+      // Validation du format IP
+      const { ipValide } = await import("@/lib/ip-restriction");
+      const verifIp = ipValide(params.ipRestriction);
+      if (!verifIp.ok) {
+        throw new AppError("VALIDATION", verifIp.message ?? "Format d'IP invalide.");
+      }
+      data.ipRestrictionMode = "SPECIFIC";
+      data.ipRestriction = params.ipRestriction.trim();
+    } else {
+      // Mode "ANY" — aucune restriction
+      data.ipRestrictionMode = "ANY";
+      data.ipRestriction = null;
+    }
   }
 
   if (params.role !== undefined && params.role !== cible.role) {

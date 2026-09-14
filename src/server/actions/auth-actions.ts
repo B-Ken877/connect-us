@@ -11,6 +11,7 @@ import { verifierLimite } from "@/lib/rate-limit";
 import { enregistrerAudit, ACTIONS_AUDIT } from "@/lib/audit";
 import { ACCUEIL_PAR_ROLE, type RoleUtilisateur } from "@/lib/auth/permissions";
 import { verifierAccesShift } from "@/lib/shifts";
+import { verifierIp } from "@/lib/ip-restriction";
 
 export interface ResultatAction<T = undefined> {
   succes: boolean;
@@ -79,6 +80,26 @@ export async function seConnecter(
       return {
         succes: false,
         message: verifShift.message ?? "Vous ne pouvez pas vous connecter en dehors de votre shift.",
+      };
+    }
+
+    // UNITED Research — vérification de la restriction IP.
+    // Si l'admin a défini une IP spécifique pour ce compte, on vérifie l'IP de la requête.
+    const verifIp = verifierIp(ip, {
+      ipRestrictionMode: utilisateur.ipRestrictionMode,
+      ipRestriction: utilisateur.ipRestriction,
+    });
+    if (!verifIp.autorise) {
+      await enregistrerAudit({
+        userId: utilisateur.id,
+        action: "CONNEXION_IP_REFUSEE",
+        entityType: "User",
+        entityId: utilisateur.id,
+        metadata: { email: parse.data.email, ip, ipAutorisee: utilisateur.ipRestriction },
+      });
+      return {
+        succes: false,
+        message: verifIp.message ?? "Connexion refusée : adresse IP non autorisée.",
       };
     }
 

@@ -27,6 +27,8 @@ export default async function PageAgents() {
       role: u.role as RoleUtilisateur,
       active: u.active,
       createdAt: u.createdAt.toISOString(),
+      ipRestrictionMode: u.ipRestrictionMode,
+      ipRestriction: u.ipRestriction,
     }));
 
   return (

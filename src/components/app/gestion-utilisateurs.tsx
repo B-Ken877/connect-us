@@ -38,6 +38,8 @@ interface UtilisateurLeger {
   role: RoleUtilisateur;
   active: boolean;
   createdAt: string;
+  ipRestrictionMode?: string;
+  ipRestriction?: string | null;
 }
 
 /** Account administration: create users, change roles, reset, activate. */
@@ -62,6 +64,9 @@ export function GestionUtilisateurs({
   // edit form — le rôle n'est PAS modifiable (politique UNITED Research)
   const [actif, setActif] = useState(true);
   const [nouveauMotDePasse, setNouveauMotDePasse] = useState("");
+  // UNITED Research — restriction IP
+  const [ipMode, setIpMode] = useState<"ANY" | "SPECIFIC">("ANY");
+  const [ipSpecifique, setIpSpecifique] = useState("");
 
   function creer() {
     demarrer(async () => {
@@ -87,11 +92,14 @@ export function GestionUtilisateurs({
         // Le rôle n'est jamais modifié — on garde le rôle existant.
         active: actif,
         ...(nouveauMotDePasse ? { motDePasse: nouveauMotDePasse } : {}),
+        ipRestrictionMode: ipMode,
+        ipRestriction: ipMode === "SPECIFIC" ? ipSpecifique : null,
       });
       if (r.succes) {
         toast({ title: "Compte mis à jour" });
         setCible(null);
         setNouveauMotDePasse("");
+        setIpSpecifique("");
         router.refresh();
       } else {
         toast({ title: "Modification impossible", description: r.message, variant: "destructive" });
@@ -194,6 +202,43 @@ export function GestionUtilisateurs({
                   />
                 </div>
               </div>
+
+              {/* UNITED Research — restriction IP */}
+              <div className="space-y-3 rounded-lg border border-border p-4">
+                <div>
+                  <p className="text-sm font-medium">Restriction d&apos;adresse IP</p>
+                  <p className="text-xs text-muted-foreground">
+                    Limite la connexion à ce compte depuis une adresse IP spécifique.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Mode d&apos;accès</Label>
+                  <Select value={ipMode} onValueChange={(v) => setIpMode(v as "ANY" | "SPECIFIC")}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ANY">N&apos;importe quelle IP</SelectItem>
+                      <SelectItem value="SPECIFIC">IP spécifique uniquement</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {ipMode === "SPECIFIC" && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="u-ip">Adresse IP autorisée</Label>
+                    <Input
+                      id="u-ip"
+                      value={ipSpecifique}
+                      onChange={(e) => setIpSpecifique(e.target.value)}
+                      placeholder="ex: 192.168.1.42"
+                      className="font-mono text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      L&apos;agent ne pourra se connecter que depuis cette IP. Format IPv4 (ex: 192.168.1.42).
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
           <DialogFooter>
@@ -223,7 +268,14 @@ export function GestionUtilisateurs({
                   )}
                 </div>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">{u.email}</p>
-                <p className="mt-2 text-xs font-medium text-primary">{LIBELLES_ROLE[u.role]}</p>
+                <div className="mt-2 flex items-center gap-1.5">
+                  <p className="text-xs font-medium text-primary">{LIBELLES_ROLE[u.role]}</p>
+                  {u.ipRestrictionMode === "SPECIFIC" && (
+                    <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                      IP: {u.ipRestriction ?? "—"}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             <Button
@@ -235,6 +287,8 @@ export function GestionUtilisateurs({
                 setCible(u);
                 setActif(u.active);
                 setNouveauMotDePasse("");
+                setIpMode(u.ipRestrictionMode === "SPECIFIC" ? "SPECIFIC" : "ANY");
+                setIpSpecifique(u.ipRestriction ?? "");
               }}
             >
               <PencilLine className="h-3.5 w-3.5" />

@@ -59,6 +59,13 @@ export async function actionMajUtilisateur(
     if (!parse.success) {
       throw new AppError("VALIDATION", parse.error.issues[0]?.message ?? "Formulaire invalide.");
     }
+    // UNITED Research — accepter les champs de restriction IP (non dans schemaUtilisateur).
+    const donneesBrutes = donnees as Record<string, unknown>;
+    const ipRestrictionMode = donneesBrutes.ipRestrictionMode === "SPECIFIC" ? "SPECIFIC" : "ANY";
+    const ipRestriction = typeof donneesBrutes.ipRestriction === "string"
+      ? (donneesBrutes.ipRestriction as string).trim() || null
+      : null;
+
     await majUtilisateur({
       acteurId: acteur.id,
       utilisateurId,
@@ -66,6 +73,8 @@ export async function actionMajUtilisateur(
       role: parse.data.role,
       motDePasse: parse.data.motDePasse || undefined,
       active: parse.data.active,
+      ipRestrictionMode,
+      ipRestriction,
     });
     revalidatePath("/agents");
     return { succes: true };

@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { lireSession, utilisateurCourant, detruireSession } from "@/lib/auth/session";
 import { AppShell } from "@/components/app/app-shell";
 import { verifierAccesShift } from "@/lib/shifts";
+import { verifierIp } from "@/lib/ip-restriction";
 import { enregistrerAudit } from "@/lib/audit";
 
 /**
@@ -36,6 +38,26 @@ export default async function LayoutApplication({ children }: { children: React.
     });
     await detruireSession();
     redirect(`/connexion?shiftTermine=1&shiftLibelle=${encodeURIComponent(verifShift.shift?.libelle ?? "")}&prochainDebut=${encodeURIComponent(verifShift.shift ? `${String(verifShift.shift.heureDebut).padStart(2, "0")}:${String(verifShift.shift.minuteDebut).padStart(2, "0")}` : "")}`);
+  }
+
+  // UNITED Research — vérification de l'IP à chaque navigation.
+  // Si l'IP de la requête ne correspond pas à l'IP autorisée, on déconnecte.
+  const entetes = await headers();
+  const ipActuelle = entetes.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "inconnue";
+  const verifIp = verifierIp(ipActuelle, {
+    ipRestrictionMode: utilisateur.ipRestrictionMode,
+    ipRestriction: utilisateur.ipRestriction,
+  });
+  if (!verifIp.autorise) {
+    await enregistrerAudit({
+      userId: utilisateur.id,
+      action: "DECONNEXION_IP_REFUSEE",
+      entityType: "User",
+      entityId: utilisateur.id,
+      metadata: { ip: ipActuelle, ipAutorisee: utilisateur.ipRestriction },
+    });
+    await detruireSession();
+    redirect(`/connexion?ipRefusee=1`);
   }
 
   return <AppShell nom={session.nom} role={session.role}>{children}</AppShell>;
