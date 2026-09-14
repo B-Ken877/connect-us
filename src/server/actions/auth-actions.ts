@@ -10,6 +10,7 @@ import { schemaConnexion } from "@/lib/validation/schemas";
 import { verifierLimite } from "@/lib/rate-limit";
 import { enregistrerAudit, ACTIONS_AUDIT } from "@/lib/audit";
 import { ACCUEIL_PAR_ROLE, type RoleUtilisateur } from "@/lib/auth/permissions";
+import { verifierAccesShift } from "@/lib/shifts";
 
 export interface ResultatAction<T = undefined> {
   succes: boolean;
@@ -61,6 +62,24 @@ export async function seConnecter(
         metadata: { email: parse.data.email, ip },
       });
       return { succes: false, message: "Identifiant ou mot de passe incorrect." };
+    }
+
+    // UNITED Research — vérification du shift de l'agent.
+    // L'agent ne peut se connecter QUE pendant son shift (08:00-13:55 ou 14:00-20:00 EST).
+    // Les administrateurs ne sont pas soumis à cette règle.
+    const verifShift = verifierAccesShift(utilisateur.name, utilisateur.role);
+    if (!verifShift.autorise) {
+      await enregistrerAudit({
+        userId: utilisateur.id,
+        action: "CONNEXION_HORS_SHIFT",
+        entityType: "User",
+        entityId: utilisateur.id,
+        metadata: { email: parse.data.email, ip, shift: verifShift.shift?.id },
+      });
+      return {
+        succes: false,
+        message: verifShift.message ?? "Vous ne pouvez pas vous connecter en dehors de votre shift.",
+      };
     }
 
     // Mise à jour de la dernière connexion (pour le tableau de bord admin).

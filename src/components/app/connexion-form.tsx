@@ -7,13 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { LoaderCircle, ShieldAlert } from "lucide-react";
+import { LoaderCircle, ShieldAlert, Clock } from "lucide-react";
 import { seConnecter, type ResultatAction } from "@/server/actions/auth-actions";
 
 export function ConnexionForm() {
   const router = useRouter();
   const parametres = useSearchParams();
   const expiree = parametres.get("expiree") === "1";
+  const shiftTermine = parametres.get("shiftTermine") === "1";
+  const shiftLibelle = parametres.get("shiftLibelle") ?? "";
+  const prochainDebut = parametres.get("prochainDebut") ?? "";
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, demarrer] = useTransition();
 
@@ -36,7 +39,22 @@ export function ConnexionForm() {
         <CardDescription>Utilisez les identifiants fournis par l&apos;administrateur.</CardDescription>
       </CardHeader>
       <CardContent>
-        {expiree && !erreur && (
+        {shiftTermine && !erreur && (
+          <Alert className="mb-4 border-primary bg-primary/5 text-primary">
+            <Clock className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Votre shift est terminé.</strong>
+              {shiftLibelle && <><br />Shift : {shiftLibelle}</>}
+              {prochainDebut && (
+                <>
+                  <br />Vous pourrez vous reconnecter demain à{" "}
+                  <strong>{prochainDebut} EST</strong>.
+                </>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+        {expiree && !erreur && !shiftTermine && (
           <Alert className="mb-4 border-amber-200 bg-amber-50 text-amber-900">
             <ShieldAlert className="h-4 w-4" />
             <AlertDescription>Votre session a expiré. Veuillez vous reconnecter.</AlertDescription>
