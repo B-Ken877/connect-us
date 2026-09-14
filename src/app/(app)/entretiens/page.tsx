@@ -1,12 +1,12 @@
 import { exigerAcces } from "@/lib/auth/session";
 import { listerEntretiens } from "@/server/services/stats-service";
 import { EnTetePage, EtatVide } from "@/components/app/primitives";
-import { BadgeEntretien, BadgeQualite } from "@/components/app/badges";
+import { BadgeQualite } from "@/components/app/badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Link from "next/link";
-import { formatDateHeureFr, formatDuree, LIBELLES_STATUT_APPEL } from "@/lib/format";
+import { formatDateHeureFr, LIBELLES_STATUT_APPEL } from "@/lib/format";
 import { Eye } from "lucide-react";
 
 export const metadata = { title: "Entretiens — UNITED Research" };
@@ -74,28 +74,22 @@ export default async function PageEntretiens({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Début</TableHead>
-                    <TableHead>Enquête</TableHead>
+                    <TableHead className="hidden md:table-cell">Enquête</TableHead>
                     <TableHead>Agent</TableHead>
-                    <TableHead className="hidden md:table-cell">Contact</TableHead>
                     <TableHead>Résultat</TableHead>
-                    <TableHead className="text-right">Réponses</TableHead>
-                    <TableHead className="text-right">Durée</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead>Qualité</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
+                    <TableHead className="text-right hidden sm:table-cell">Réponses</TableHead>
+                    <TableHead className="hidden lg:table-cell">Qualité</TableHead>
+                    <TableHead className="text-right">Détail</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {resultat.entretiens.map((entretien) => (
                     <TableRow key={entretien.id}>
                       <TableCell className="whitespace-nowrap text-sm">{formatDateHeureFr(entretien.startedAt)}</TableCell>
-                      <TableCell className="text-sm">
+                      <TableCell className="hidden md:table-cell text-sm">
                         {entretien.surveyVersion.survey.title} — v{entretien.surveyVersion.versionNumber}
                       </TableCell>
                       <TableCell className="text-sm">{entretien.agent.name}</TableCell>
-                      <TableCell className="hidden md:table-cell text-sm">
-                        {entretien.respondent.name ?? <span className="font-mono text-xs text-muted-foreground">#{entretien.respondent.id.slice(-8)}</span>}
-                      </TableCell>
                       <TableCell>
                         {entretien.callAttempt ? (
                           <Badge
@@ -114,10 +108,8 @@ export default async function PageEntretiens({
                           <span className="text-xs text-muted-foreground">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-right text-sm chiffre-cle">{entretien._count.answers}</TableCell>
-                      <TableCell className="text-right text-sm">{formatDuree(entretien.durationSeconds)}</TableCell>
-                      <TableCell><BadgeEntretien statut={entretien.status} /></TableCell>
-                      <TableCell>
+                      <TableCell className="text-right text-sm chiffre-cle hidden sm:table-cell">{entretien._count.answers}</TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         <BadgeQualite statut={entretien.qualityStatus} />
                         {entretien._count.qualityFlags > 0 && (
                           <span className="ml-1.5 text-xs text-amber-600">({entretien._count.qualityFlags})</span>
@@ -126,7 +118,9 @@ export default async function PageEntretiens({
                       <TableCell className="text-right">
                         <Button asChild size="sm" variant="outline" className="gap-1.5">
                           <Link href={`/entretiens/${entretien.id}`}>
-                            <Eye className="h-3.5 w-3.5" /> Voir le détail
+                            <Eye className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">Voir le détail</span>
+                            <span className="sm:hidden">Détail</span>
                           </Link>
                         </Button>
                       </TableCell>
