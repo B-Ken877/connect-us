@@ -67,7 +67,13 @@ export function InterviewRunner({ mode, interviewId, questionnaire, afficherTitr
   const { questions, titreEnquete, versionNumber, configuration } = questionnaire;
 
   const [reponses, setReponses] = useState<ReponsesParCle>(reponsesInitiales ?? {});
-  const [cleChoisie, setCleChoisie] = useState<string | null>(null); // position explicite (navigation)
+  // Position initiale calculée une seule fois au premier rendu (lazy initializer) :
+  // on va à la première question non répondue. Ensuite, cleChoisie ne change
+  // que par navigation explicite — JAMAIS automatiquement pendant la saisie.
+  const [cleChoisie, setCleChoisie] = useState<string | null>(() => {
+    const visiblesInit = questionsVisibles(questions, reponsesInitiales ?? {});
+    return premiereQuestionNonRepondue(questions, reponsesInitiales ?? {})?.key ?? visiblesInit[0]?.key ?? null;
+  });
   const [erreurs, setErreurs] = useState<Record<string, string>>({});
   const [sauvegarde, setSauvegarde] = useState<"repos" | "en_cours" | "ok" | "erreur">("repos");
   const [soumission, setSoumission] = useState(false);
@@ -80,13 +86,17 @@ export function InterviewRunner({ mode, interviewId, questionnaire, afficherTitr
 
   const visibles = useMemo(() => questionsVisibles(questions, reponses), [questions, reponses]);
 
-  // Current question — DERIVED during render (no effect): if the chosen key is
-  // still visible we keep it, otherwise we resume at the first unanswered
-  // visible question (handles initial load AND branch changes).
+  // Current question — DERIVED during render.
+  // CRITIQUE: on ne déplace JAMAIS automatiquement l'agent vers la première
+  // question non répondue pendant la saisie. Sinon, dès qu'une lettre est
+  // tapée, la question devient "répondue" et l'agent saute à la suivante.
+  // La position initiale est fixée par le lazy initializer de cleChoisie.
   const cleCourante = useMemo(() => {
+    // Si l'agent a explicitement choisi une question (navigation ou init), on y reste.
     if (cleChoisie && visibles.some((q) => q.key === cleChoisie)) return cleChoisie;
-    return premiereQuestionNonRepondue(questions, reponses)?.key ?? visibles[0]?.key ?? null;
-  }, [cleChoisie, visibles, questions, reponses]);
+    // Fallback: première question visible (sans saut automatique).
+    return visibles[0]?.key ?? null;
+  }, [cleChoisie, visibles]);
 
   // localStorage mirror (UX resilience only — server is authoritative).
   const cleLocale = interviewId ? `united:entretien:${interviewId}` : null;
