@@ -507,3 +507,75 @@ export async function obtenirEntretienActif(agentId: string) {
     include: { respondent: { select: { id: true, name: true, phone: true } } },
   });
 }
+
+// ------------------- UNITED Research — détail complet d'un appel -------------------
+
+/**
+ * Charge le détail complet d'un entretien pour l'admin :
+ *  - interview + respondent + agent + callAttempt + surveyVersion
+ *  - TOUTES les réponses avec la question figée (texte exact au moment de l'appel)
+ *  - Le script d'introduction de la campagne (sur Survey, pas sur la version)
+ *
+ * PRÉSERVATION HISTORIQUE : l'interview référence surveyVersionId qui est
+ * IMMUELLE une fois publiée (triggers PostgreSQL). Les questions de cette
+ * version ne peuvent pas être modifiées — donc le texte affiché ici est
+ * exactement celui qui était présent au moment de l'appel, même si
+ * l'admin a créé une nouvelle version avec des questions modifiées.
+ */
+export async function obtenirDetailEntretien(interviewId: string) {
+  const interview = await db.interview.findUnique({
+    where: { id: interviewId },
+    include: {
+      respondent: { select: { id: true, name: true, phone: true, status: true } },
+      agent: { select: { id: true, name: true, email: true } },
+      callAttempt: { select: { id: true, status: true, startedAt: true, endedAt: true, durationSeconds: true, notes: true, callbackAt: true } },
+      surveyVersion: {
+        select: {
+          id: true,
+          versionNumber: true,
+          status: true,
+          publishedAt: true,
+          survey: {
+            select: {
+              id: true,
+              title: true,
+              candidateName: true,
+              openingScript: true,
+              complianceMessage: true,
+            },
+          },
+        },
+      },
+      answers: {
+        include: {
+          question: {
+            select: {
+              id: true,
+              key: true,
+              text: true,
+              helpText: true,
+              type: true,
+              required: true,
+              order: true,
+              options: { select: { label: true, value: true, order: true }, orderBy: { order: "asc" } },
+            },
+          },
+        },
+        orderBy: { question: { order: "asc" } },
+      },
+      qualityFlags: {
+        select: { id: true, type: true, severity: true, reason: true, status: true },
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
+
+  if (!interview) throw new AppError("INTROUVABLE", "Cet appel est introuvable.");
+
+  // Trier les réponses par ordre des questions (au cas où l'orderBy relation échoue).
+  interview.answers.sort((a, b) => (a.question?.order ?? 0) - (b.question?.order ?? 0));
+
+  return interview;
+}
+
+export type DetailEntretien = Awaited<ReturnType<typeof obtenirDetailEntretien>>;

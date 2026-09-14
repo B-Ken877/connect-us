@@ -2,9 +2,12 @@ import { exigerAcces } from "@/lib/auth/session";
 import { listerEntretiens } from "@/server/services/stats-service";
 import { EnTetePage, EtatVide } from "@/components/app/primitives";
 import { BadgeEntretien, BadgeQualite } from "@/components/app/badges";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Link from "next/link";
-import { formatDateHeureFr, formatDuree } from "@/lib/format";
+import { formatDateHeureFr, formatDuree, LIBELLES_STATUT_APPEL } from "@/lib/format";
+import { Eye } from "lucide-react";
 
 export const metadata = { title: "Entretiens — UNITED Research" };
 export const dynamic = "force-dynamic";
@@ -73,11 +76,13 @@ export default async function PageEntretiens({
                     <TableHead>Début</TableHead>
                     <TableHead>Enquête</TableHead>
                     <TableHead>Agent</TableHead>
-                    <TableHead className="hidden md:table-cell">Répondant (ID)</TableHead>
+                    <TableHead className="hidden md:table-cell">Contact</TableHead>
+                    <TableHead>Résultat</TableHead>
                     <TableHead className="text-right">Réponses</TableHead>
                     <TableHead className="text-right">Durée</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Qualité</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -88,8 +93,26 @@ export default async function PageEntretiens({
                         {entretien.surveyVersion.survey.title} — v{entretien.surveyVersion.versionNumber}
                       </TableCell>
                       <TableCell className="text-sm">{entretien.agent.name}</TableCell>
-                      <TableCell className="hidden font-mono text-xs text-muted-foreground md:table-cell">
-                        {entretien.respondent.id.slice(-10)}
+                      <TableCell className="hidden md:table-cell text-sm">
+                        {entretien.respondent.name ?? <span className="font-mono text-xs text-muted-foreground">#{entretien.respondent.id.slice(-8)}</span>}
+                      </TableCell>
+                      <TableCell>
+                        {entretien.callAttempt ? (
+                          <Badge
+                            variant="outline"
+                            className={
+                              entretien.callAttempt.status === "TERMINE"
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                : entretien.callAttempt.status === "NE_PAS_RAPPELER"
+                                  ? "border-red-200 bg-red-50 text-red-700"
+                                  : "border-border bg-muted"
+                            }
+                          >
+                            {LIBELLES_STATUT_APPEL[entretien.callAttempt.status] ?? entretien.callAttempt.status}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right text-sm chiffre-cle">{entretien._count.answers}</TableCell>
                       <TableCell className="text-right text-sm">{formatDuree(entretien.durationSeconds)}</TableCell>
@@ -99,6 +122,13 @@ export default async function PageEntretiens({
                         {entretien._count.qualityFlags > 0 && (
                           <span className="ml-1.5 text-xs text-amber-600">({entretien._count.qualityFlags})</span>
                         )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button asChild size="sm" variant="outline" className="gap-1.5">
+                          <Link href={`/entretiens/${entretien.id}`}>
+                            <Eye className="h-3.5 w-3.5" /> Voir le détail
+                          </Link>
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}

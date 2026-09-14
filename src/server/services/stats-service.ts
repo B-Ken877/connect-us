@@ -294,6 +294,7 @@ export async function listerEntretiens(filtre: { statut?: string; qualite?: stri
         agent: { select: { name: true } },
         respondent: { select: { id: true, name: true, externalRef: true } },
         surveyVersion: { select: { versionNumber: true, survey: { select: { title: true } } } },
+        callAttempt: { select: { status: true } },
         _count: { select: { answers: true, qualityFlags: true } },
       },
     }),

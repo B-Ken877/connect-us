@@ -37,11 +37,28 @@ export const LIBELLES_STATUT_APPEL: Record<string, string> = {
   TERMINE: "Appel terminé",
   SANS_REPONSE: "Sans réponse",
   OCCUPE: "Occupé",
-  NUMERO_INCORRECT: "Numéro incorrect",
-  REFUS: "Refus",
-  RAPPEL: "Rappel",
+  NUMERO_INCORRECT: "Mauvais numéro",
+  REFUS: "Refusé",
+  RAPPEL: "Rappel demandé",
   ABANDONNE: "Abandonné",
+  // ---- UNITED Research — nouveaux résultats ----
+  MESSAGERIE: "Messagerie vocale",
+  NE_PAS_RAPPELER: "Ne plus appeler",
+  AUTRE: "Autre",
 };
+
+/**
+ * Masque partiellement un numéro de téléphone pour la confidentialité.
+ * Affiche seulement les 4 derniers chiffres, masque le reste.
+ * Ex: "+509 5500 1234" → "••••••••1234"
+ * Utilisé dans les vues admin où le numéro complet n'est pas nécessaire.
+ */
+export function masquerTelephone(phone: string | null | undefined): string {
+  if (!phone) return "—";
+  const chiffres = phone.replace(/\D/g, "");
+  if (chiffres.length < 4) return "—";
+  return "•".repeat(Math.max(4, chiffres.length - 4)) + chiffres.slice(-4);
+}
 
 export const LIBELLES_STATUT_AGENT: Record<string, string> = {
   DISPONIBLE: "Disponible",
