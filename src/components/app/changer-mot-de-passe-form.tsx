@@ -27,7 +27,10 @@ export function ChangerMotDePasseForm() {
       }
       setSucces(true);
       // Rediriger vers la page d'accueil du rôle après 1,5 s.
-      setTimeout(() => router.refresh(), 1500);
+      // On utilise router.replace("/") — la route "/" est redirigée par le proxy
+      // vers la page d'accueil du rôle (tableau-de-bord pour admin, session pour agent).
+      // router.refresh() seul ne changeait pas l'URL → l'utilisateur restait bloqué.
+      setTimeout(() => router.replace("/"), 1500);
     });
   }
 
@@ -47,7 +50,7 @@ export function ChangerMotDePasseForm() {
           <Alert className="mb-4 border-emerald-200 bg-emerald-50 text-emerald-900">
             <ShieldCheck className="h-4 w-4" />
             <AlertDescription>
-              {erreur ?? "Mot de passe modifié avec succès. Redirection en cours…"}
+              Mot de passe modifié avec succès. Redirection en cours…
             </AlertDescription>
           </Alert>
         )}
