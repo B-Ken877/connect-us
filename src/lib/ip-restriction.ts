@@ -39,7 +39,7 @@ export function verifierIp(
     autorise: false,
     message:
       `Connexion refusée : cette adresse IP n'est pas autorisée pour ce compte. ` +
-      `Seule l'IP ${infos.ipRestriction} est autorisée. Contactez l'administrateur.`,
+      `Contactez l'administrateur.`,
   };
 }
 
