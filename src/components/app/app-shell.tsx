@@ -14,6 +14,7 @@ import {
   Settings,
   Menu,
   X,
+  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LIBELLES_ROLE, type RoleUtilisateur } from "@/lib/auth/permissions";
@@ -35,6 +36,7 @@ const MENU: ElementMenu[] = [
   { href: "/entretiens", libelle: "Fiches d'appel", icone: UserCheck, roles: ["ADMINISTRATEUR"] },
   { href: "/supervision", libelle: "Supervision", icone: Activity, roles: ["ADMINISTRATEUR"] },
   { href: "/controle-qualite", libelle: "Contrôle qualité", icone: ShieldCheck, roles: ["ADMINISTRATEUR"] },
+  { href: "/journal-connexions", libelle: "Journal de connexions", icone: ShieldAlert, roles: ["ADMINISTRATEUR"] },
   { href: "/agents", libelle: "Agents & comptes", icone: Settings, roles: ["ADMINISTRATEUR"] },
 ];
 

@@ -29,6 +29,7 @@ export const REGLES_ACCES: RegleAcces[] = [
   { prefix: "/entretiens", roles: ["ADMINISTRATEUR"] },
   { prefix: "/supervision", roles: ["ADMINISTRATEUR"] },
   { prefix: "/controle-qualite", roles: ["ADMINISTRATEUR"] },
+  { prefix: "/journal-connexions", roles: ["ADMINISTRATEUR"] },
   { prefix: "/agents", roles: ["ADMINISTRATEUR"] },
   { prefix: "/parametres", roles: ["ADMINISTRATEUR"] },
 ];
