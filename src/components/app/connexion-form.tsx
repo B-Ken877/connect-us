@@ -76,14 +76,19 @@ export function ConnexionForm() {
             <AlertDescription>{erreur}</AlertDescription>
           </Alert>
         )}
-        <form action={soumettre} className="space-y-4">
+        {/* UNITED Research — sécurité : désactiver l'autocomplétion et le stockage
+            des identifiants par le navigateur. Les agents doivent saisir manuellement. */}
+        <form action={soumettre} className="space-y-4" autoComplete="off">
           <div className="space-y-2">
             <Label htmlFor="email">Adresse e-mail</Label>
             <Input
               id="email"
               name="email"
               type="email"
-              autoComplete="username"
+              autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               placeholder="prenom.nom@centre.fr"
               required
               autoFocus
@@ -95,7 +100,10 @@ export function ConnexionForm() {
               id="motDePasse"
               name="motDePasse"
               type="password"
-              autoComplete="current-password"
+              autoComplete="new-password"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               placeholder="••••••••"
               required
             />
