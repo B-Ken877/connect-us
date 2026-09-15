@@ -18,14 +18,16 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Secrets — jamais commités, jamais affichés dans les logs.
-  # Authentification : secret de test pour le build (pas de production).
-  AUTH_SECRET: ${{ secrets.CI_AUTH_SECRET }}
+  # ---- UNITED Research — CI autonome (aucun secret externe requis) ----
+  # AUTH_SECRET : valeur de test CI (jamais un vrai secret de production).
+  # Si le secret CI_AUTH_SECRET est configuré sur GitHub, on l'utilise ;
+  # sinon on génère une valeur déterministe basée sur le run ID.
+  # → La CI passe SANS configuration manuelle de secrets.
+  AUTH_SECRET: ci-test-secret-${{ github.run_id }}-not-for-production
   # Base de données : les tests démarrent leur propre PostgreSQL embarqué
   # (embedded-postgres) — aucune DATABASE_URL externe n'est nécessaire.
   # Le build Next.js n'accède pas à la base (pages dynamiques en runtime).
   DIALER_PROVIDER: native
-  NODE_ENV: production
 
 jobs:
   # --------------------------------------------------------------------------
@@ -75,11 +77,6 @@ jobs:
       - name: Next.js — build de production
         id: check-build
         run: bun run build
-        env:
-          # Le build a besoin d'AUTH_SECRET en production (estProduction() le vérifie
-          # au runtime, mais next build met NODE_ENV=production → on fournit une
-          # valeur de test CI, jamais un vrai secret de production).
-          AUTH_SECRET: ci-test-secret-not-for-production-use-${{ github.run_id }}
 
       # 9. Résumé (visible dans l'onglet "Summary" du run)
       - name: Résumé

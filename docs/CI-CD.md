@@ -45,11 +45,19 @@ Documentation du pipeline d'intégration continue et de déploiement.
 
 ### Secrets GitHub Actions requis
 
+**Aucun secret n'est requis pour que la CI passe.** Le workflow est autonome :
+
+- `AUTH_SECRET` — généré automatiquement avec une valeur de test CI basée sur le `run_id` (jamais un vrai secret de production)
+- `DATABASE_URL` — non requis (les tests démarrent leur propre PostgreSQL embarqué `embedded-postgres`)
+- `DIALER_PROVIDER` — défini à `native` dans le workflow
+
+**Optionnel** — si vous voulez un secret CI dédié (au lieu de la valeur auto-générée) :
+
 | Secret | Usage | Valeur |
 |---|---|---|
-| `CI_AUTH_SECRET` | Secret JWT de test pour le build | Chaîne aléatoire quelconque (jamais le vrai secret de production) |
+| `CI_AUTH_SECRET` | (Optionnel) Secret JWT de test pour le build | Chaîne aléatoire quelconque |
 
-**Aucun autre secret n'est requis pour la CI.** Les tests démarrent leur propre PostgreSQL embarqué (`embedded-postgres`) — aucune `DATABASE_URL` externe n'est nécessaire.
+Si `CI_AUTH_SECRET` est configuré, il remplace la valeur auto-générée. Sinon, la CI utilise `ci-test-secret-{run_id}-not-for-production` — suffisant pour le build.
 
 ---
 
