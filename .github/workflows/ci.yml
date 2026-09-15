@@ -1,0 +1,98 @@
+# ============================================================================
+# UNITED Research — Pipeline CI (intégration continue)
+# ----------------------------------------------------------------------------
+# Exécute les contrôles qualité sur chaque pull request et push.
+# Vercel reste responsable du déploiement — ce workflow ne déploie PAS.
+# ============================================================================
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, united-research]
+
+# Annule les runs obsolètes sur la même branche/PR.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Secrets — jamais commités, jamais affichés dans les logs.
+  # Authentification : secret de test pour le build (pas de production).
+  AUTH_SECRET: ${{ secrets.CI_AUTH_SECRET }}
+  # Base de données : les tests démarrent leur propre PostgreSQL embarqué
+  # (embedded-postgres) — aucune DATABASE_URL externe n'est nécessaire.
+  # Le build Next.js n'accède pas à la base (pages dynamiques en runtime).
+  DIALER_PROVIDER: native
+  NODE_ENV: production
+
+jobs:
+  # --------------------------------------------------------------------------
+  # Job unique — qualité + build. Si une étape échoue, les suivantes ne
+  # s'exécutent pas (fail-fast), ce qui garde le log lisible.
+  # --------------------------------------------------------------------------
+  qualite:
+    name: Qualité (tsc + lint + tests + build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # 1. Checkout du code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Installation du runtime Bun (package manager du projet)
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # 3. Installation des dépendances (lockfile figé)
+      - name: Installation des dépendances
+        run: bun install --frozen-lockfile
+
+      # 4. Génération du client Prisma (requis par tsc + build)
+      - name: Génération du client Prisma
+        run: bunx --bun prisma generate
+
+      # 5. Validation TypeScript (type-check strict)
+      - name: TypeScript — validation des types
+        id: check-ts
+        run: bunx --bun tsc --noEmit
+
+      # 6. Lint (ESLint + config Next.js)
+      - name: ESLint — vérification du code
+        id: check-lint
+        run: bun run lint
+
+      # 7. Tests (Vitest — démarre un PostgreSQL embarqué pour les tests)
+      - name: Vitest — exécution des tests
+        id: check-test
+        run: bun run test
+
+      # 8. Build de production (prisma generate + next build + standalone)
+      - name: Next.js — build de production
+        id: check-build
+        run: bun run build
+        env:
+          # Le build a besoin d'AUTH_SECRET en production (estProduction() le vérifie
+          # au runtime, mais next build met NODE_ENV=production → on fournit une
+          # valeur de test CI, jamais un vrai secret de production).
+          AUTH_SECRET: ci-test-secret-not-for-production-use-${{ github.run_id }}
+
+      # 9. Résumé (visible dans l'onglet "Summary" du run)
+      - name: Résumé
+        if: always()
+        run: |
+          echo "## Pipeline CI — UNITED Research" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Étape | Statut |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Checkout | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Bun install | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Prisma generate | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| TypeScript | ${{ steps.check-ts.outcome == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ESLint | ${{ steps.check-lint.outcome == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests | ${{ steps.check-test.outcome == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ steps.check-build.outcome == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
