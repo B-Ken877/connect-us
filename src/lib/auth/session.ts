@@ -19,7 +19,7 @@ import type { User } from "@prisma/client";
  * Secure flag in production (HTTPS on Vercel), SameSite=Lax, path=/.
  */
 
-export async function creerSession(utilisateur: User): Promise<void> {
+export async function creerSession(utilisateur: Pick<User, "id" | "name" | "role">): Promise<void> {
   const token = await signerTokenSession({
     sub: utilisateur.id,
     nom: utilisateur.name,

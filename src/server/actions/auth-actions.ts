@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { AppError, versMessageUtilisateur } from "@/lib/errors";
 import { creerSession, detruireSession, lireSession } from "@/lib/auth/session";
 import { verifierMotDePasse, hasherMotDePasse, motDePasseValide } from "@/lib/auth/password";
+import type { User } from "@prisma/client";
 import { schemaConnexion } from "@/lib/validation/schemas";
 import { verifierLimite } from "@/lib/rate-limit";
 import { enregistrerAudit, ACTIONS_AUDIT } from "@/lib/audit";
@@ -46,9 +47,22 @@ export async function seConnecter(
     };
   }
 
+  let utilisateur: Pick<User, "id" | "name" | "email" | "role" | "active" | "passwordHash" | "mustChangePassword" | "ipRestrictionMode" | "ipRestriction"> | null = null;
+
   try {
-    const utilisateur = await db.user.findUnique({
+    utilisateur = await db.user.findUnique({
       where: { email: parse.data.email.toLowerCase() },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        active: true,
+        passwordHash: true,
+        mustChangePassword: true,
+        ipRestrictionMode: true,
+        ipRestriction: true,
+      },
     });
     const motDePasseOk =
       utilisateur && utilisateur.active
@@ -122,17 +136,17 @@ export async function seConnecter(
     return { succes: false, message: versMessageUtilisateur(erreur) };
   }
 
-  const session = await lireSession();
-  // Si l'utilisateur doit changer son mot de passe (compte créé en masse ou
-  // reset admin), on le redirige vers l'écran de changement obligatoire.
-  const utilisateurFinal = await db.user.findUnique({
-    where: { id: session!.sub },
-    select: { mustChangePassword: true },
-  });
-  if (utilisateurFinal?.mustChangePassword) {
+  // UNITED Research — utiliser l'objet utilisateur déjà chargé plutôt que
+  // relire la session. Le cookie fraîchement créé par creerSession() n'est
+  // PAS immédiatement lisible via lireSession() dans la même requête Server
+  // Action, ce qui causait une TypeError non capturée → error boundary.
+  if (!utilisateur) {
+    return { succes: false, message: "Identifiant ou mot de passe incorrect." };
+  }
+  if (utilisateur.mustChangePassword) {
     redirect("/changer-mot-de-passe");
   }
-  redirect(ACCUEIL_PAR_ROLE[session!.role as RoleUtilisateur]);
+  redirect(ACCUEIL_PAR_ROLE[utilisateur.role as RoleUtilisateur]);
 }
 
 /**
