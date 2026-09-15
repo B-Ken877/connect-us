@@ -77,18 +77,33 @@ export function ConnexionForm() {
           </Alert>
         )}
         {/* UNITED Research — sécurité : désactiver l'autocomplétion et le stockage
-            des identifiants par le navigateur. Les agents doivent saisir manuellement. */}
-        <form action={soumettre} className="space-y-4" autoComplete="off">
+            des identifiants par le navigateur ET les gestionnaires de mots de
+            passe (LastPass, 1Password, Dashlane, Bitwarden). Les agents doivent
+            saisir manuellement à chaque connexion. */}
+        <form
+          action={soumettre}
+          className="space-y-4"
+          autoComplete="off"
+          data-lpignore="true"
+          data-1p-ignore="true"
+          data-dashlane-ignore="true"
+          data-form-type="other"
+        >
           <div className="space-y-2">
             <Label htmlFor="email">Adresse e-mail</Label>
             <Input
               id="email"
               name="email"
-              type="email"
+              type="text"
+              inputMode="email"
               autoComplete="off"
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
+              data-lpignore="true"
+              data-1p-ignore="true"
+              data-dashlane-ignore="true"
+              data-form-type="other"
               placeholder="prenom.nom@centre.fr"
               required
               autoFocus
@@ -104,6 +119,10 @@ export function ConnexionForm() {
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
+              data-lpignore="true"
+              data-1p-ignore="true"
+              data-dashlane-ignore="true"
+              data-form-type="other"
               placeholder="••••••••"
               required
             />
