@@ -153,3 +153,108 @@ export function signalerIncoherence(params: {
     metadata: { violations },
   };
 }
+
+// ---------------------------------------------------------------------------
+// UNITED Research — Règle #3 : TAUX_REFUS_ELEVE
+// L'agent a un taux de refus > seuilRefus sur ses N derniers appels.
+// Peut indiquer que l'agent ne suit pas le script, est impoli, ou cible mal.
+// ---------------------------------------------------------------------------
+
+export function signalerTauxRefusEleve(params: {
+  appelsRecents: { statut: string }[];
+  seuilRefusPourcent: number;
+  fenetreMinimale: number;
+}): PropositionSignalement | null {
+  const appels = params.appelsRecents;
+  if (appels.length < params.fenetreMinimale) return null;
+
+  const refus = appels.filter((a) => a.statut === "REFUS").length;
+  const taux = (refus / appels.length) * 100;
+  if (taux < params.seuilRefusPourcent) return null;
+
+  return {
+    type: "TAUX_REFUS_ELEVE",
+    severite: taux > params.seuilRefusPourcent + 20 ? "ELEVEE" : "MOYENNE",
+    raison: `Taux de refus élevé : ${refus}/${appels.length} appels (${taux.toFixed(0)}%) sur les derniers appels — seuil : ${params.seuilRefusPourcent}%.`,
+    metadata: { refus, total: appels.length, taux, seuil: params.seuilRefusPourcent },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// UNITED Research — Règle #4 : TAUX_COMPLETION_FAIBLE
+// L'agent a un taux de complétion < seuilCompletion sur ses N derniers appels.
+// Beaucoup d'appels sans complétion = problème d'efficacité ou technique.
+// ---------------------------------------------------------------------------
+
+export function signalerTauxCompletionFaible(params: {
+  appelsRecents: { statut: string }[];
+  seuilCompletionPourcent: number;
+  fenetreMinimale: number;
+}): PropositionSignalement | null {
+  const appels = params.appelsRecents;
+  if (appels.length < params.fenetreMinimale) return null;
+
+  const termines = appels.filter((a) => a.statut === "TERMINE").length;
+  const taux = (termines / appels.length) * 100;
+  if (taux >= params.seuilCompletionPourcent) return null;
+
+  return {
+    type: "TAUX_COMPLETION_FAIBLE",
+    severite: taux < params.seuilCompletionPourcent / 2 ? "ELEVEE" : "MOYENNE",
+    raison: `Taux de complétion faible : ${termines}/${appels.length} appels terminés (${taux.toFixed(0)}%) — seuil attendu : ${params.seuilCompletionPourcent}%.`,
+    metadata: { termines, total: appels.length, taux, seuil: params.seuilCompletionPourcent },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// UNITED Research — Règle #7 : SESSION_SANS_ACTIVITE
+// Session agent ouverte > 30 min sans aucun appel terminé.
+// L'agent est présent mais ne travaille pas — problème de productivité.
+// ---------------------------------------------------------------------------
+
+export function signalerSessionSansActivite(params: {
+  dureeSessionMinutes: number;
+  appelsTerminesSession: number;
+  seuilMinutes: number;
+}): PropositionSignalement | null {
+  if (params.appelsTerminesSession > 0) return null;
+  if (params.dureeSessionMinutes < params.seuilMinutes) return null;
+
+  return {
+    type: "SESSION_SANS_ACTIVITE",
+    severite: params.dureeSessionMinutes > params.seuilMinutes * 2 ? "MOYENNE" : "FAIBLE",
+    raison: `Session ouverte depuis ${params.dureeSessionMinutes} min sans aucun appel terminé — seuil : ${params.seuilMinutes} min.`,
+    metadata: { dureeSessionMinutes: params.dureeSessionMinutes, appelsTermines: params.appelsTerminesSession },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// UNITED Research — Règle #8 : DUREE_SUSPECTE_REGULIERE
+// Les durées des appels de l'agent sont trop uniformes (variance ≈ 0).
+// Les appels humains ont une variance naturelle — trop uniforme = suspect.
+// ---------------------------------------------------------------------------
+
+export function signalerDureeSuspecteReguliere(params: {
+  dureesAppels: number[];
+  fenetreMinimale: number;
+  toleranceSecondes: number;
+}): PropositionSignalement | null {
+  const durees = params.dureesAppels.filter((d) => d > 0);
+  if (durees.length < params.fenetreMinimale) return null;
+
+  const moyenne = durees.reduce((a, b) => a + b, 0) / durees.length;
+  if (moyenne <= 0) return null;
+
+  const variance = durees.reduce((acc, d) => acc + (d - moyenne) ** 2, 0) / durees.length;
+  const ecartType = Math.sqrt(variance);
+
+  // Si l'écart-type est très petit par rapport à la tolérance, les durées sont trop uniformes.
+  if (ecartType > params.toleranceSecondes) return null;
+
+  return {
+    type: "DUREE_SUSPECTE_REGULIERE",
+    severite: ecartType < params.toleranceSecondes / 2 ? "ELEVEE" : "MOYENNE",
+    raison: `Durées d'appels anormalement uniformes : écart-type ${ecartType.toFixed(1)}s sur ${durees.length} appels (moyenne ${moyenne.toFixed(0)}s) — variance trop faible pour des appels humains.`,
+    metadata: { moyenne, ecartType, nbAppels: durees.length, durees: durees.slice(-10) },
+  };
+}

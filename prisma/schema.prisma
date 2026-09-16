@@ -104,6 +104,11 @@ enum TypeSignalement {
   REPETITION_REPONSES
   ACTIVITE_EXCESSIVE
   INCOHERENCE
+  // ---- UNITED Research — nouveaux contrôles qualité ----
+  TAUX_REFUS_ELEVE
+  TAUX_COMPLETION_FAIBLE
+  SESSION_SANS_ACTIVITE
+  DUREE_SUSPECTE_REGULIERE
 }
 
 enum SeveriteSignalement {

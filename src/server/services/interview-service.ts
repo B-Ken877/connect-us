@@ -21,6 +21,10 @@ import {
   signalerIncoherence,
   signalerRepetitionReponses,
   signalerActiviteExcessive,
+  signalerTauxRefusEleve,
+  signalerTauxCompletionFaible,
+  signalerSessionSansActivite,
+  signalerDureeSuspecteReguliere,
   type PropositionSignalement,
   type SeuilsQualite,
 } from "@/lib/quality/rules";
@@ -378,6 +382,76 @@ export async function soumettreEntretien(params: {
       signalerIncoherence({
         reponses,
         configuration: version.config as Parameters<typeof signalerIncoherence>[0]["configuration"],
+      }),
+    );
+
+    // ---- UNITED Research — nouveaux contrôles qualité (#3, #4, #7, #8) ----
+
+    // Récupérer les 20 derniers call attempts de l'agent (pour taux refus/completion)
+    const appelsRecentsAgentRaw = await tx.callAttempt.findMany({
+      where: { agentId: params.agentId },
+      orderBy: { startedAt: "desc" },
+      take: 20,
+      select: { status: true },
+    });
+    // Mapper vers le format attendu par les règles (statut → string)
+    const appelsRecentsAgent = appelsRecentsAgentRaw.map((a) => ({ statut: a.status }));
+
+    // #3 : TAUX_REFUS_ELEVE — > 40% de refus sur les 20 derniers appels
+    propositions.push(
+      signalerTauxRefusEleve({
+        appelsRecents: appelsRecentsAgent,
+        seuilRefusPourcent: 40,
+        fenetreMinimale: 10,
+      }),
+    );
+
+    // #4 : TAUX_COMPLETION_FAIBLE — < 20% de terminés sur les 20 derniers appels
+    propositions.push(
+      signalerTauxCompletionFaible({
+        appelsRecents: appelsRecentsAgent,
+        seuilCompletionPourcent: 20,
+        fenetreMinimale: 10,
+      }),
+    );
+
+    // #7 : SESSION_SANS_ACTIVITE — session > 30 min sans appel terminé
+    const sessionActive = await tx.agentSession.findFirst({
+      where: { agentId: params.agentId, endedAt: null },
+      orderBy: { startedAt: "desc" },
+      select: { startedAt: true, lastActivityAt: true },
+    });
+    if (sessionActive) {
+      const dureeSessionMs = Date.now() - sessionActive.startedAt.getTime();
+      const dureeSessionMin = Math.floor(dureeSessionMs / 60_000);
+      const appelsTerminesSession = await tx.callAttempt.count({
+        where: {
+          agentId: params.agentId,
+          status: "TERMINE",
+          startedAt: { gte: sessionActive.startedAt },
+        },
+      });
+      propositions.push(
+        signalerSessionSansActivite({
+          dureeSessionMinutes: dureeSessionMin,
+          appelsTerminesSession,
+          seuilMinutes: 30,
+        }),
+      );
+    }
+
+    // #8 : DUREE_SUSPECTE_REGULIERE — durées trop uniformes sur 10 derniers appels
+    const dureesRecents = await tx.callAttempt.findMany({
+      where: { agentId: params.agentId, status: "TERMINE", durationSeconds: { not: null } },
+      orderBy: { startedAt: "desc" },
+      take: 10,
+      select: { durationSeconds: true },
+    });
+    propositions.push(
+      signalerDureeSuspecteReguliere({
+        dureesAppels: dureesRecents.map((d) => d.durationSeconds ?? 0),
+        fenetreMinimale: 5,
+        toleranceSecondes: 5,
       }),
     );
 

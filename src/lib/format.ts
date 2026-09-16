@@ -107,6 +107,11 @@ export const LIBELLES_TYPE_SIGNALEMENT: Record<string, string> = {
   REPETITION_REPONSES: "Réponses répétées",
   ACTIVITE_EXCESSIVE: "Activité excessive",
   INCOHERENCE: "Incohérence",
+  // ---- UNITED Research — nouveaux contrôles qualité ----
+  TAUX_REFUS_ELEVE: "Taux de refus élevé",
+  TAUX_COMPLETION_FAIBLE: "Taux de complétion faible",
+  SESSION_SANS_ACTIVITE: "Session sans activité",
+  DUREE_SUSPECTE_REGULIERE: "Durées suspectes (trop uniformes)",
 };
 
 export const LIBELLES_SEVERITE: Record<string, string> = {
