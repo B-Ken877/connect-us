@@ -88,7 +88,9 @@ export async function actionAppelerSuivant(): Promise<
 > {
   try {
     const utilisateur = await exigerRole(ROLES_AGENT);
+    console.log("[actionAppelerSuivant] Agent:", utilisateur.id, utilisateur.name);
     const attribution = await attribuerProchainRepondant(utilisateur.id);
+    console.log("[actionAppelerSuivant] Attribution:", attribution ? "OK" : "FILE VIDE");
     if (!attribution) return { succes: true, data: { fileVide: true } };
 
     revalidatePath("/session");
@@ -107,6 +109,7 @@ export async function actionAppelerSuivant(): Promise<
       },
     };
   } catch (e) {
+    console.error("[actionAppelerSuivant] Erreur:", e);
     return erreur(e);
   }
 }

@@ -85,18 +85,23 @@ export function ConsoleAgent({ prenom, nomComplet, statsInitiales, entretienActi
     verrouAppel.current = true;
     setEnCours(true);
     setFileVide(false);
+    console.log("[appelerSuivant] Début, agent clique 'Appeler le répondant suivant'");
     const r = await actionAppelerSuivant();
+    console.log("[appelerSuivant] Résultat:", JSON.stringify(r).substring(0, 200));
     setEnCours(false);
     verrouAppel.current = false;
     if (!r.succes || !r.data) {
+      console.error("[appelerSuivant] Échec:", r.message);
       toast({ title: "Erreur", description: r.message ?? "Action impossible.", variant: "destructive" });
       return;
     }
     if ("fileVide" in r.data) {
+      console.log("[appelerSuivant] File vide");
       setFileVide(true);
       return;
     }
     // Interview-first workflow: straight into the workspace.
+    console.log("[appelerSuivant] Redirection vers /session/entretien/" + r.data.interviewId);
     router.push(`/session/entretien/${r.data.interviewId}`);
   }
 

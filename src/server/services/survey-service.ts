@@ -459,7 +459,7 @@ export async function obtenirCampagneActive() {
         include: {
           questions: {
             orderBy: { order: "asc" },
-            select: { id: true, key: true, text: true, type: true, required: true, order: true },
+            include: { options: { orderBy: { order: "asc" } } },
           },
         },
       },
