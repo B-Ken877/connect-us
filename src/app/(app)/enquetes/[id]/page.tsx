@@ -7,10 +7,11 @@ import { BadgeStatutVersion } from "@/components/app/badges-enquete";
 import { ActionsVersion } from "@/components/app/actions-version";
 import { NouvelleVersionBouton } from "@/components/app/nouvelle-version-bouton";
 import { EditeurScript } from "@/components/app/editeur-script";
+import { BoutonStatutCampagne } from "@/components/app/bouton-statut-campagne";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateHeureFr } from "@/lib/format";
-import { FileDown, Eye, PencilLine, Info } from "lucide-react";
+import { FileDown, Eye, PencilLine, Info, BarChart3 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,11 @@ export default async function PageEnquete({ params }: { params: Promise<{ id: st
         description={enquete.description ?? undefined}
         actions={
           <>
+            <Button asChild variant="outline" className="gap-2">
+              <Link href={`/enquetes/${enquete.id}/donnees`}>
+                <BarChart3 className="h-4 w-4" /> Données collectées
+              </Link>
+            </Button>
             {brouillon && (
               <Button asChild variant="outline" className="gap-2">
                 <Link href={`/enquetes/${enquete.id}/apercu?version=${brouillon.id}`}>
@@ -53,6 +59,11 @@ export default async function PageEnquete({ params }: { params: Promise<{ id: st
           </>
         }
       />
+
+      {/* Statut campagne — UNITED Research */}
+      <div className="mb-6">
+        <BoutonStatutCampagne enqueteId={enquete.id} statut={enquete.status} />
+      </div>
 
       {!brouillon && (
         <div className="mb-6 flex items-start gap-2.5 rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">

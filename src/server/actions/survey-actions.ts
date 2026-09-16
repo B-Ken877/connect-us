@@ -6,6 +6,8 @@ import { exigerRole } from "@/lib/auth/session";
 import { creerEnquete, creerNouvelleVersion, publierVersion, archiverVersion, majEnquete, creerQuestion, majQuestion, supprimerQuestion, dupliquerQuestion, reordonnerQuestions, majConfigVersion, majScriptEnquete, type DonneesQuestion } from "@/server/services/survey-service";
 import { schemaEnquete, schemaQuestion } from "@/lib/validation/schemas";
 import type { RoleUtilisateur } from "@/lib/auth/permissions";
+import { db } from "@/lib/db";
+import { enregistrerAudit, ACTIONS_AUDIT } from "@/lib/audit";
 
 export interface ResultatAction<T = undefined> {
   succes: boolean;
@@ -213,4 +215,49 @@ export async function actionMajScript(params: {
   } catch (e) {
     return erreur(e);
   }
+}
+
+// ------------------- UNITED Research — statut campagne -------------------
+
+export async function actionMajStatutEnquete(params: {
+  enqueteId: string;
+  statut: "BROUILLON" | "PUBLIEE" | "ARCHIVEE" | "EN_PAUSE" | "TERMINEE";
+}): Promise<ResultatAction> {
+  try {
+    const utilisateur = await exigerRole(ROLES_GESTION);
+    const enquete = await db.survey.findUnique({ where: { id: params.enqueteId } });
+    if (!enquete) throw new AppError("INTROUVABLE", "Campagne introuvable.");
+
+    await db.survey.update({
+      where: { id: params.enqueteId },
+      data: { status: params.statut, updatedById: utilisateur.id },
+    });
+
+    await enregistrerAudit({
+      userId: utilisateur.id,
+      action: ACTIONS_AUDIT.CAMPAGNE_MODIFIEE,
+      entityType: "Survey",
+      entityId: params.enqueteId,
+      metadata: { ancienStatut: enquete.status, nouveauStatut: params.statut },
+    });
+
+    revalidatePath(`/enquetes/${params.enqueteId}`);
+    revalidatePath("/enquetes");
+    revalidatePath("/session");
+    revalidatePath("/tableau-de-bord");
+    return { succes: true, message: `Campagne marquée comme « ${libelleStatut(params.statut)} ».` };
+  } catch (e) {
+    return erreur(e);
+  }
+}
+
+function libelleStatut(statut: string): string {
+  const libelles: Record<string, string> = {
+    BROUILLON: "Brouillon",
+    PUBLIEE: "Active",
+    ARCHIVEE: "Archivée",
+    EN_PAUSE: "En pause",
+    TERMINEE: "Terminée",
+  };
+  return libelles[statut] ?? statut;
 }

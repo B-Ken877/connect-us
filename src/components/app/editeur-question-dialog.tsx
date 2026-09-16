@@ -74,7 +74,7 @@ export function EditeurQuestionDialog({
   const [texte, setTexte] = useState(questionInitiale?.text ?? "");
   const [cle, setCle] = useState(questionInitiale?.key ?? "");
   const [aide, setAide] = useState(questionInitiale?.helpText ?? "");
-  const [type, setType] = useState<TypeQuestion>(questionInitiale?.type ?? "TEXTE_LONG");
+  const [type, setType] = useState<TypeQuestion>(questionInitiale?.type ?? "CHOIX_UNIQUE");
   const [obligatoire, setObligatoire] = useState(questionInitiale?.required ?? false);
   const [options, setOptions] = useState<{ label: string; value: string }[]>(
     questionInitiale?.options.map((o) => ({ label: o.label, value: o.value })) ?? [{ label: "", value: "" }],
@@ -95,7 +95,7 @@ export function EditeurQuestionDialog({
       setTexte(questionInitiale?.text ?? "");
       setCle(questionInitiale?.key ?? "");
       setAide(questionInitiale?.helpText ?? "");
-      setType(questionInitiale?.type ?? "TEXTE_LONG");
+      setType(questionInitiale?.type ?? "CHOIX_UNIQUE");
       setObligatoire(questionInitiale?.required ?? false);
       setOptions(questionInitiale?.options.map((o) => ({ label: o.label, value: o.value })) ?? [{ label: "", value: "" }]);
       setCfg((questionInitiale?.configuration ?? {}) as Record<string, unknown>);
@@ -138,8 +138,9 @@ export function EditeurQuestionDialog({
         key: cle,
         text: texte.trim(),
         helpText: aide.trim(),
-        // UNITED Research MVP: forcer TEXTE_LONG (réponse libre) pour toutes les nouvelles questions.
-        type: "TEXTE_LONG",
+        // UNITED Research — forcer CHOIX_UNIQUE : l'admin définit les réponses,
+        // l'agent choisit parmi elles. Pas de texte libre.
+        type: "CHOIX_UNIQUE",
         required: obligatoire,
         configuration: cfg,
         validationRules: motif.trim() ? { motif: motif.trim(), message: messageMotif.trim() || undefined } : null,
@@ -203,17 +204,17 @@ export function EditeurQuestionDialog({
               />
               <p className="text-xs text-muted-foreground">Identifiant technique (statistiques, exports, logique).</p>
             </div>
-            {/* UNITED Research MVP: seul le type TEXTE_LONG (réponse libre) est exposé.
-                Les autres types restent dans le moteur (compatibilité) mais sont masqués de l'UI. */}
+            {/* UNITED Research — seul le type CHOIX_UNIQUE (réponses prédéfinies) est exposé.
+                L'admin définit les réponses possibles, l'agent choisit parmi elles. */}
             <div className="space-y-1.5">
               <Label htmlFor="q-type">Type de question</Label>
               <Input
                 id="q-type"
-                value="Réponse libre (texte)"
+                value="Choix unique (réponses prédéfinies)"
                 disabled
                 className="bg-muted/50"
               />
-              <p className="text-xs text-muted-foreground">Réponse libre — l&apos;agent saisit le texte librement.</p>
+              <p className="text-xs text-muted-foreground">L&apos;agent choisit parmi les réponses définies ci-dessous.</p>
             </div>
           </div>
 
@@ -230,10 +231,9 @@ export function EditeurQuestionDialog({
             <Switch checked={obligatoire} onCheckedChange={setObligatoire} aria-label="Réponse obligatoire" />
           </div>
 
-          {/* UNITED Research MVP: masquer les panneaux de configuration des types complexes
-              (options, nombre, échelle). Seul TEXTE_LONG est exposé. Le code reste pour
-              compatibilité future. */}
-          {false && TYPES_AVEC_OPTIONS.includes(type) && (
+          {/* UNITED Research — panneau des réponses prédéfinies (CHOIX_UNIQUE).
+              L'admin définit les réponses possibles, l'agent choisit parmi elles. */}
+          {TYPES_AVEC_OPTIONS.includes(type) && (
             <div className="rounded-lg border border-slate-200 p-4">
               <p className="text-sm font-medium">Options de réponse</p>
               <div className="mt-3 space-y-2">
