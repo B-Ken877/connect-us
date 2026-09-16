@@ -6,12 +6,41 @@ import { config } from "@/lib/config";
  * METRICS SERVICE — agent statistics & supervisor console feeds.
  * All aggregates are computed with SQL group-bys (no full-table scans into
  * Node). The console refreshes by short polling — no WebSockets (serverless).
+ *
+ * UNITED Research — "aujourd'hui" = minuit en heure Eastern (America/New_York),
+ * pas minuit UTC. Sur Vercel le runtime est UTC → sans ce fix, les stats
+ * "du jour" basculaient à 19h EST (00h UTC).
  */
 
+const TIMEZONE_EASTERN = "America/New_York";
+
 const DEBUT_JOUR = () => {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
+  // Obtenir l'heure actuelle en Eastern via Intl.
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: TIMEZONE_EASTERN,
+    year: "numeric", month: "2-digit", day: "2-digit",
+  });
+  const parties = formatter.formatToParts(new Date());
+  const an = parseInt(parties.find((p) => p.type === "year")?.value ?? "0", 10);
+  const mois = parseInt(parties.find((p) => p.type === "month")?.value ?? "0", 10) - 1;
+  const jour = parseInt(parties.find((p) => p.type === "day")?.value ?? "0", 10);
+
+  // Construire minuit Eastern en UTC.
+  // America/New_York est UTC-5 (EST) ou UTC-4 (EDT).
+  // On utilise Intl pour obtenir l'offset exact, puis on calcule le minuit UTC.
+  const dateEst = new Date(Date.UTC(an, mois, jour, 0, 0, 0));
+  // Obtenir l'offset Eastern à cette date (en minutes)
+  const offsetFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: TIMEZONE_EASTERN,
+    timeZoneName: "shortOffset",
+  });
+  const offsetParties = offsetFormatter.formatToParts(dateEst);
+  const offsetStr = offsetParties.find((p) => p.type === "timeZoneName")?.value ?? "GMT-5";
+  // Extraire l'offset numérique (ex: "GMT-5" → -5, "GMT-4" → -4)
+  const match = offsetStr.match(/GMT([+-]\d+)/);
+  const offsetHeures = match ? parseInt(match[1], 10) : -5;
+  // minuit Eastern = minuit UTC + |offset| heures (car Eastern est derrière UTC)
+  return new Date(Date.UTC(an, mois, jour, Math.abs(offsetHeures), 0, 0));
 };
 
 export interface StatsAgent {

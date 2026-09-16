@@ -126,7 +126,7 @@ export default async function PageTableauDeBord() {
                   style={{ height: `${Math.max(4, (jour.total / maxJour) * 140)}px` }}
                 />
                 <span className="text-[11px] text-muted-foreground">
-                  {new Date(`${jour.date}T12:00:00`).toLocaleDateString("fr-FR", { weekday: "short" })}
+                  {new Date(`${jour.date}T12:00:00`).toLocaleDateString("fr-FR", { weekday: "short", timeZone: "America/New_York" })}
                 </span>
               </div>
             ))}

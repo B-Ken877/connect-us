@@ -47,7 +47,7 @@ export function ConsoleSupervision({ donneesInitiales }: { donneesInitiales: Sta
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
           Actualisation automatique toutes les 10 s — dernière mise à jour :{" "}
-          {derniere.toLocaleTimeString("fr-FR")}
+          {derniere.toLocaleTimeString("fr-FR", { timeZone: "America/New_York" })}
         </p>
         {erreur && <p className="text-xs font-medium text-amber-600">{erreur}</p>}
       </div>

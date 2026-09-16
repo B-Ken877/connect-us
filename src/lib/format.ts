@@ -1,12 +1,19 @@
 /**
  * French date/time & duration formatting (server + client safe — no
  * "server-only" marker: imported by client badges and components too).
+ *
+ * UNITED Research — tous les timestamps sont affichés en heure Eastern
+ * (America/New_York) qui gère automatiquement EDT (UTC-4, été) ↔ EST
+ * (UTC-5, hiver). Les durées sont en secondes, indépendantes du timezone.
  */
+
+const TIMEZONE_EASTERN = "America/New_York";
 
 export function formatDateHeureFr(date: Date | string | null | undefined): string {
   if (!date) return "—";
   const d = typeof date === "string" ? new Date(date) : date;
   return new Intl.DateTimeFormat("fr-FR", {
+    timeZone: TIMEZONE_EASTERN,
     dateStyle: "short",
     timeStyle: "short",
   }).format(d);
@@ -15,7 +22,10 @@ export function formatDateHeureFr(date: Date | string | null | undefined): strin
 export function formatDateFr(date: Date | string | null | undefined): string {
   if (!date) return "—";
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" }).format(d);
+  return new Intl.DateTimeFormat("fr-FR", {
+    timeZone: TIMEZONE_EASTERN,
+    dateStyle: "long",
+  }).format(d);
 }
 
 export function formatDuree(secondes: number | null | undefined): string {
