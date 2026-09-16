@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { lireSession, utilisateurCourant, detruireSession } from "@/lib/auth/session";
 import { AppShell } from "@/components/app/app-shell";
+import { AgentShell } from "@/components/app/agent-shell";
 import { verifierAccesShift } from "@/lib/shifts";
 import { verifierIp } from "@/lib/ip-restriction";
 import { enregistrerAudit } from "@/lib/audit";
@@ -60,5 +61,10 @@ export default async function LayoutApplication({ children }: { children: React.
     redirect(`/connexion?ipRefusee=1`);
   }
 
+  // UNITED Research — shell séparé pour les agents (pas de sidebar ni hamburger).
+  // Les admin gardent la sidebar complète avec navigation.
+  if (utilisateur.role === "AGENT") {
+    return <AgentShell nom={session.nom} role={session.role}>{children}</AgentShell>;
+  }
   return <AppShell nom={session.nom} role={session.role}>{children}</AppShell>;
 }
